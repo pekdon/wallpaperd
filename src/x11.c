@@ -2,9 +2,13 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 
-#include "wallpaperd.h"
+#include "util.h"
+#include "x11.h"
 
 static Display *DISPLAY = 0;
+
+static void x11_set_geometry_size(struct geometry *geometry, int x, int y,
+                                  unsigned int width, unsigned int height);
 
 /**
  * Open a connection to the X11 display if not already open.
@@ -67,6 +71,37 @@ Window
 x11_get_colormap (void)
 {
     return DefaultColormap (DISPLAY, DefaultScreen (DISPLAY));
+}
+
+/**
+ * Return an array with head geometries, the first head is the
+ * combined geometry of the display and the last entry is signalled
+ * with width/height 0.
+ */
+struct geometry*
+x11_get_geometry (void)
+{
+    struct geometry *geometry = mem_new (sizeof(struct geometry));
+
+    Screen *screen = ScreenOfDisplay (DISPLAY, DefaultScreen (DISPLAY));
+
+    x11_set_geometry_size (geometry, 0, 0,
+                           WidthOfScreen(screen), HeightOfScreen(screen));
+
+    return geometry;
+}
+
+/**
+ * Update geometry.
+ */
+void
+x11_set_geometry_size(struct geometry *geometry, int x, int y,
+                      unsigned int width, unsigned int height)
+{
+    geometry->x = x;
+    geometry->y = y;
+    geometry->width = width;
+    geometry->height = height;
 }
 
 /**

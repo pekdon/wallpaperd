@@ -14,7 +14,7 @@
  * Single node in the cache structure.
  */
 struct cache_node {
-    const char *path;
+    char *path;
     enum wallpaper_mode mode;
     Pixmap pixmap;
 

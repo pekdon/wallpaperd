@@ -16,7 +16,7 @@ struct cache_node*
 cache_node_new (const char *path, enum wallpaper_mode mode, Pixmap pixmap)
 {
     struct cache_node *node = mem_new (sizeof (struct cache_node));
-    node->path = path;
+    node->path = strdup (path);
     node->mode = mode;
     node->pixmap = pixmap;
     node->next = 0;
@@ -30,6 +30,7 @@ void
 cache_node_free (struct cache_node *node)
 {
     imlib_free_pixmap_and_mask (node->pixmap);
+    mem_free (node->path);
     mem_free (node);
 }
 

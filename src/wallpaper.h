@@ -11,8 +11,9 @@
  */
 enum wallpaper_mode {
     CENTERED,
-    ZOOM,
-    TILED
+    TILED,
+    FILL,
+    ZOOM
 };
 
 extern void wallpaper_set (const char *path, enum wallpaper_mode mode);

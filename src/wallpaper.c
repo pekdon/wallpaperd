@@ -17,10 +17,10 @@ static struct cache *CACHE;
 static void wallpaper_set_x11 (struct cache_node *node);
 
 static Imlib_Image render_image (Imlib_Image image, enum wallpaper_mode mode);
-static Imlib_Image render_zoom (Imlib_Image image);
-static Imlib_Image render_centered (Imlib_Image image);
-static Imlib_Image render_tiled (Imlib_Image image);
-
+static Imlib_Image render_centered (struct geometry *geometry, Imlib_Image image);
+static Imlib_Image render_tiled (struct geometry *geometry, Imlib_Image image);
+static Imlib_Image render_fill (struct geometry *geometry, Imlib_Image image);
+static Imlib_Image render_zoom (struct geometry *geometry, Imlib_Image image);
 static Pixmap render_x11_pixmap (Imlib_Image image);
 
 /**
@@ -40,8 +40,8 @@ wallpaper_set (const char *path, enum wallpaper_mode mode)
         Pixmap pixmap = render_x11_pixmap (image_rendered);
         imlib_context_set_image (image);
         imlib_free_image ();
-        /* FIXME: Add free for image_rendered when render actually
-                  does something. */
+        imlib_context_set_image (image_rendered);
+        imlib_free_image ();
         node = cache_set_pixmap (CACHE, path, mode, pixmap);
     }
     wallpaper_set_x11 (node);
@@ -59,10 +59,12 @@ wallpaper_mode_from_str (const char *str)
     if (! str) {
     } else if (! strcasecmp (str, "CENTERED")) {
         mode = CENTERED;
-    } else if (! strcasecmp (str, "ZOOM")) {
-        mode = ZOOM;
     } else if (! strcasecmp (str, "TILED")) {
         mode = TILED;
+    } else if (! strcasecmp (str, "FILL")) {
+        mode = FILL;
+    } else if (! strcasecmp (str, "ZOOM")) {
+        mode = ZOOM;
     }
 
     return mode;
@@ -96,39 +98,137 @@ render_image (Imlib_Image image, enum wallpaper_mode mode)
 {
     Imlib_Image image_rendered;
 
+    struct geometry *geometry = x11_get_geometry ();
+
     switch (mode) {
     case CENTERED:
-        image_rendered = render_centered (image);
-        break;
-    case ZOOM:
-        image_rendered = render_zoom (image);
+        image_rendered = render_centered (geometry, image);
         break;
     case TILED:
-        image_rendered = render_tiled (image);
+        image_rendered = render_tiled (geometry, image);
         break;
+    case FILL:
+        image_rendered = render_fill (geometry, image);
+        break;
+    case ZOOM:
+        image_rendered = render_zoom (geometry, image);
+        break;
+
     }
+
+    mem_free (geometry);
 
     return image_rendered;
 }
 
+/**
+ * Fill image on new image without keeping aspect ratio.
+ */
 Imlib_Image
-render_zoom (Imlib_Image image)
+render_fill (struct geometry *geometry, Imlib_Image image)
 {
-    return image;
+    imlib_context_set_image (image);
+    int s_width = imlib_image_get_width ();
+    int s_height = imlib_image_get_height ();
+    
+    Imlib_Image image_dest = imlib_create_cropped_scaled_image (0, 0, 
+                                                                s_width, s_height,
+                                                                geometry->width, geometry->height);
+
+    return image_dest;
 }
 
+/**
+ * Fill image on new image keeping aspect ratio.
+ */
 Imlib_Image
-render_centered (Imlib_Image image)
+render_zoom (struct geometry *geometry, Imlib_Image image)
 {
-    return image;
+    imlib_context_set_image (image);
+    int s_width = imlib_image_get_width ();
+    int s_height = imlib_image_get_height ();
+
+    float s_aspect = (float) s_width / s_height;
+    float d_aspect = (float) geometry->width / geometry->height;
+
+    int d_width, d_height;
+    if (s_aspect > d_aspect) {
+        d_width = geometry->width / s_aspect * d_aspect;
+        d_height = geometry->height;
+    } else {
+        d_width = geometry->width;
+        d_height = geometry->height / s_aspect * d_aspect;
+    }
+
+    Imlib_Image image_zoom = imlib_create_cropped_scaled_image (0, 0, 
+                                                                s_width, s_height,
+                                                                d_width, d_height);
+
+    Imlib_Image image_dest = render_centered (geometry, image_zoom);
+
+    imlib_context_set_image (image_zoom);
+    imlib_free_image ();
+
+    return image_dest;
 }
 
+/**
+ * Render image centered on geometry sized image.
+ */
 Imlib_Image
-render_tiled (Imlib_Image image)
+render_centered (struct geometry *geometry, Imlib_Image image)
 {
-    return image;
+    imlib_context_set_image (image);
+    int s_width = imlib_image_get_width ();
+    int s_height = imlib_image_get_height ();
+
+    Imlib_Image image_dest = imlib_create_image (geometry->width,
+                                                 geometry->height);
+    imlib_context_set_image (image_dest);
+    imlib_context_set_color (0, 0, 0, 255);
+    imlib_image_fill_rectangle (0, 0,
+                                imlib_image_get_width (),
+                                imlib_image_get_height ());
+
+
+    int dest_x = (geometry->width - s_width) / 2;
+    int dest_y = (geometry->height - s_height) / 2;
+    imlib_blend_image_onto_image (image, 0,
+                                  0, 0, s_width, s_height,
+                                  dest_x, dest_y, s_width, s_height);
+
+    return image_dest;
 }
 
+/**
+ * Tile image onto new image.
+ */
+Imlib_Image
+render_tiled (struct geometry *geometry, Imlib_Image image)
+{
+    imlib_context_set_image (image);
+    int s_width = imlib_image_get_width ();
+    int s_height = imlib_image_get_height ();
+
+    Imlib_Image image_dest = imlib_create_image (geometry->width,
+                                                 geometry->height);
+    imlib_context_set_image (image_dest);
+
+    for (int x = 0; x < geometry->width; x += s_width) {
+        for (int y = 0; y < geometry->height; y += s_height) {
+            imlib_blend_image_onto_image (image, 0,
+                                          0, 0, s_width, s_height,
+                                          x, y, s_width, s_height);
+
+        }
+    }
+
+    return image_dest;
+}
+
+/**
+ * Create Pixmap from from image.
+ */
 Pixmap
 render_x11_pixmap (Imlib_Image image)
 {

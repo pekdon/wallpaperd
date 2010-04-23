@@ -6,6 +6,20 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
+#include <X11/Xlib.h>
+
+/**
+ * Geometry specification (list).
+ */
+struct geometry {
+    int x;
+    int y;
+    int width;
+    int height;
+
+    struct geometry *next;
+};
+
 extern void x11_open_display (void);
 extern void x11_close_display (void);
 
@@ -14,6 +28,7 @@ extern Window x11_get_root_window (void);
 extern Display *x11_get_display (void);
 extern Visual *x11_get_visual (void);
 extern Colormap x11_get_colormap (void);
+extern struct geometry *x11_get_geometry (void);
 
 extern void x11_set_background_pixmap (Window window, Pixmap pixmap);
 
