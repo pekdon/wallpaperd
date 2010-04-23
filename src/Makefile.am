@@ -10,9 +10,9 @@ wallpaperd_SOURCES = \
 	util.c util.h \
 	x11.c x11.h
 
-wallpaperd_LDADD = @imlib2_LIBS@
+wallpaperd_LDADD = @xlib_LIBS@ @imlib2_LIBS@
 
-INCLUDES = @imlib2_CFLAGS@
+INCLUDES = @xlib_CFLAGS@ @imlib2_CFLAGS@
 
 distclean-local:
 	rm -f *\~ .\#*

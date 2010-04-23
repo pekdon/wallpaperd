@@ -1,5 +1,5 @@
 dnl init autoconf / automake
-AC_INIT(wallpaperd, 0.1.2)
+AC_INIT(wallpaperd, 0.1.3)
 AC_CONFIG_SRCDIR(src/wallpaperd.c)
 AM_INIT_AUTOMAKE
 AM_CONFIG_HEADER(config.h)
@@ -12,6 +12,27 @@ AC_PROG_INSTALL
 dnl search for headers
 AC_STDC_HEADERS
 AC_HAVE_HEADERS(sys/types.h sys/stat.h unistd.h)
+
+dnl add x11 to the env
+AC_PATH_X
+AC_PATH_XTRA
+if test "x$no_x" = "xyes"; then
+    AC_MSG_ERROR([Could not find Xlib, required dependency.])
+fi
+
+if ! test -z "$x_includes"; then
+    xlib_CFLAGS="-I$x_includes"
+else
+    xlib_CFLAGS=""
+fi
+if ! test -z "$x_libraries"; then
+    xlib_LIBS="-L$x_libraries -lX11"
+else
+    xlib_LIBS="-lX11"
+fi
+
+AC_SUBST(xlib_CFLAGS)
+AC_SUBST(xlib_LIBS)
 
 dnl check required libraries
 PKG_CHECK_MODULES([imlib2], [imlib2 >= 1.0.0], HAVE_IMLIB2=yes, HAVE_IMLIB2=no)

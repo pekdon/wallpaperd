@@ -5,18 +5,21 @@
 
 #define _GNU_SOURCE
 
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "cfg.h"
 #include "util.h"
 
+static int validate_config (struct config *config);
+
 static void parse_config (FILE *fp, struct config *config);
 static char *parse_line (FILE *fp, char *buf, size_t buf_size);
+static void parse_key_value (struct config *config, char *line);
 
-static int count_and_add_search_paths (struct config *config,
-                                       const char *search_path_opt,
-                                       int count_only);
+static int count_and_add_search_paths(
+        struct config *config, const char *search_path_opt, int count_only);
 
 /**
  * Load configuration.
@@ -27,10 +30,65 @@ cfg_load (const char *path)
     struct config *config = mem_new (sizeof (struct config));
     FILE *fp = fopen (path, "r");
     if (fp != 0) {
+        config->path = strdup (path);
+
         parse_config (fp, config);
+        if (! validate_config(config)) {
+            cfg_free (config);
+            config = 0;
+        }
+
         fclose (fp);
+    } else {
+        die ("failed to open configuration file %s", path);
     }
+
     return config;
+}
+
+/**
+ * Free up resources used by configuration.
+ */
+void
+cfg_free (struct config *config)
+{
+    if (config->search_path) {
+        for (int i = 0; config->search_path[i] != 0; i++) {
+            mem_free (config->search_path[i]);
+        }
+        mem_free (config->search_path);
+    }
+
+    mem_free (config->path);
+    mem_free (config);
+}
+
+/**
+ * Validate configuration, return 1 if all required options are set.
+ */
+int
+validate_config (struct config *config)
+{
+    const char *required_options[] = {
+        "wallpaper.default.image",
+        "wallpaper.default.mode",
+        0
+        };
+
+    int config_ok = 1;
+    for (int i = 0; required_options[i] != 0; i++) {
+        const char *key = required_options[i];
+        const char *value = cfg_get (config, key);
+        if (! value) {
+            fprintf (stderr, "required option %s not set\n", key);
+            config_ok = 0;
+        } else if (! strlen (value)) {
+            fprintf (stderr, "required option %s empty\n", key);
+            config_ok = 0;
+        }
+    }
+
+    return config_ok;
 }
 
 /**
@@ -90,10 +148,13 @@ cfg_get_mode (struct config *config, long desktop)
     return mode_str;
 }
 
-const char**
+/**
+ * Get image search path from configuration.
+ */
+char**
 cfg_get_search_path (struct config *config)
 {
-    if (!config->search_path) {
+    if (! config->search_path) {
         const char *search_path_opt = cfg_get (config, "path.search");
         if (! search_path_opt) {
             search_path_opt = ".:~:~/Pictures";
@@ -109,6 +170,10 @@ cfg_get_search_path (struct config *config)
     return config->search_path;
 }
 
+/**
+ * Count path entries in : separted string, if count_only 0 then
+ * expand user and add the result to the already allocated search_path
+ */
 int
 count_and_add_search_paths (struct config *config,
                             const char *search_path_opt, int count_only)
@@ -167,12 +232,16 @@ parse_config (FILE *fp, struct config *config)
     size_t buf_size = 4096;
     char *buf = mem_new (sizeof(char) * buf_size);
 
-    char *line, *key, *value;
+    char *line;
     while ((line = parse_line (fp, buf, buf_size)) != 0) {
-        key = strtok (line, "=");
-        value = strtok (0, "=");
-        if (key && value) {
-            cfg_add_node (config, key, value);
+        if (line[0] == '#') {
+            /* Filter out comment lines */
+            continue;
+        } else if (! str_first_not_of (line, " \t")) {
+            /* Filter out empty lines */
+        } else {
+            parse_key_value (config, line);
+
         }
     }
 
@@ -195,4 +264,21 @@ parse_line (FILE *fp, char *buf, size_t buf_size)
     buf[pos] = '\0';
 
     return c == EOF ? 0 : buf;
+}
+
+/**
+ * Parse key = value pair and add to configuration.
+ */
+void
+parse_key_value (struct config *config, char *line)
+{
+    char *key_end = str_first_of(line, " =");
+    if (key_end != 0) {
+        *key_end = '\0';
+        
+        char *value_start = str_first_not_of(key_end + 1, " =");
+        if (value_start != 0) {
+            cfg_add_node(config, line, value_start);
+        }
+    }
 }

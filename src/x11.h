@@ -20,7 +20,7 @@ struct geometry {
     struct geometry *next;
 };
 
-extern void x11_open_display (void);
+extern int x11_open_display (void);
 extern void x11_close_display (void);
 
 extern Display *x11_get_display (void);

@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <X11/Xlib.h>
@@ -19,6 +20,19 @@
 #include "util.h"
 #include "x11.h"
 
+/**
+ * Command line options structure.
+ */
+struct options {
+    int help;
+    int foreground;
+    int stop;
+};
+
+static void parse_options (int argc, char **argv, struct options *options);
+static void usage (const char *name);
+static void do_start (struct options *options);
+static void do_stop (void);
 static void main_loop (void);
 static void handle_property_event (XEvent *ev);
 static void handle_xrandr_event (XEvent *ev);
@@ -31,28 +45,109 @@ static Atom DESKTOP_ATOM;
 static struct config *CONFIG;
 
 /**
+ * Parse command line options.
+ */
+void
+parse_options (int argc, char **argv, struct options *options)
+{
+    options->help = 0;
+    options->foreground = 0;
+    options->stop = 0;
+
+    int opt;
+    while ((opt = getopt (argc, argv, "hfs")) != -1) {
+        switch (opt) {
+
+        case 'f':
+            options->foreground = 1;
+            break;
+        case 's':
+            options->stop = 1;
+        case 'h':
+        case '?':
+        default:
+            options->help = 1;
+            break;
+        }
+    }
+}
+
+/**
+ * Print usage information and exit.
+ */
+void
+usage (const char *name)
+{
+    fprintf (stderr, "usage: %s [-f]", name);
+    exit (1);
+}
+
+/**
  * Main routine, parse configuration and start listening for desktop
  * changes.
  */
 int
 main (int argc, char **argv)
 {
-    char *cfg_path = cfg_get_path ();
-    CONFIG = cfg_load (cfg_path);
+    struct options options;
+    parse_options (argc, argv, &options);
+    if (options.help) {
+        usage (argv[0]);
+    }
 
-    x11_open_display ();
-    x11_init_event_listeners ();
+    if (options.stop) {
+        do_stop ();
+    } else {
+        do_start (&options);
+    }
 
-    DESKTOP_ATOM = x11_get_atom ("_NET_CURRENT_DESKTOP");
-
-    set_wallpaper_for_current_desktop ();
-    main_loop ();
-
-    wallpaper_cache_clear ();    
-    x11_close_display ();
-    mem_free (cfg_path);
 
     return 0;
+}
+
+/**
+ * Start wallpaper daemon.
+ */
+void
+do_start (struct options *options)
+{
+    char *cfg_path = cfg_get_path ();
+    CONFIG = cfg_load (cfg_path);
+    if (! CONFIG) {
+        die ("failed to load configuration from %s, aborting!", cfg_path);
+    }
+
+    if (x11_open_display ()) {
+        /* Go into background */
+        if (! options->foreground) {
+            if (daemon (0, 0) == -1) {
+                perror ("failed to daemonize");
+            } else {
+                /* FIXME: Write PID for stopping daemon later. */
+            }
+        }
+
+        x11_init_event_listeners ();
+
+        DESKTOP_ATOM = x11_get_atom ("_NET_CURRENT_DESKTOP");
+
+        set_wallpaper_for_current_desktop ();
+        main_loop ();
+
+        wallpaper_cache_clear ();
+        x11_close_display ();
+    }
+
+    mem_free (cfg_path);
+}
+
+/**
+ * Stop wallpaper daemon.
+ */
+void
+do_stop (void)
+{
+    fprintf (stderr, "stopping of wallpaperd not implemented, tried pkill?!\n");
 }
 
 /**
@@ -128,7 +223,7 @@ find_wallpaper (const char *name)
         return strdup (name);
     }
 
-    const char **search_path = cfg_get_search_path (CONFIG);
+    char **search_path = cfg_get_search_path (CONFIG);
 
     char *path;
     struct stat buf;

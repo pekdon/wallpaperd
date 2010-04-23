@@ -61,9 +61,9 @@ wallpaper_mode_from_str (const char *str)
         mode = CENTERED;
     } else if (! strcasecmp (str, "TILED")) {
         mode = TILED;
-    } else if (! strcasecmp (str, "FILL")) {
+    } else if (! strcasecmp (str, "FILLED")) {
         mode = FILL;
-    } else if (! strcasecmp (str, "ZOOM")) {
+    } else if (! strcasecmp (str, "ZOOMED")) {
         mode = ZOOM;
     }
 
@@ -93,6 +93,9 @@ wallpaper_set_x11 (struct cache_node *node)
     }
 }
 
+/**
+ * Render image for current screen with specified mode.
+ */
 Imlib_Image
 render_image (Imlib_Image image, enum wallpaper_mode mode)
 {
@@ -101,9 +104,6 @@ render_image (Imlib_Image image, enum wallpaper_mode mode)
     struct geometry *geometry = x11_get_geometry ();
 
     switch (mode) {
-    case CENTERED:
-        image_rendered = render_centered (geometry, image);
-        break;
     case TILED:
         image_rendered = render_tiled (geometry, image);
         break;
@@ -113,7 +113,10 @@ render_image (Imlib_Image image, enum wallpaper_mode mode)
     case ZOOM:
         image_rendered = render_zoom (geometry, image);
         break;
-
+    case CENTERED:
+    default:
+        image_rendered = render_centered (geometry, image);
+        break;
     }
 
     mem_free (geometry);
@@ -131,9 +134,8 @@ render_fill (struct geometry *geometry, Imlib_Image image)
     int s_width = imlib_image_get_width ();
     int s_height = imlib_image_get_height ();
     
-    Imlib_Image image_dest = imlib_create_cropped_scaled_image (0, 0, 
-                                                                s_width, s_height,
-                                                                geometry->width, geometry->height);
+    Imlib_Image image_dest = imlib_create_cropped_scaled_image (
+            0, 0, s_width, s_height, geometry->width, geometry->height);
 
     return image_dest;
 }
@@ -160,9 +162,8 @@ render_zoom (struct geometry *geometry, Imlib_Image image)
         d_height = geometry->height / s_aspect * d_aspect;
     }
 
-    Imlib_Image image_zoom = imlib_create_cropped_scaled_image (0, 0, 
-                                                                s_width, s_height,
-                                                                d_width, d_height);
+    Imlib_Image image_zoom = imlib_create_cropped_scaled_image (
+            0, 0, s_width, s_height, d_width, d_height);
 
     Imlib_Image image_dest = render_centered (geometry, image_zoom);
 
@@ -182,20 +183,18 @@ render_centered (struct geometry *geometry, Imlib_Image image)
     int s_width = imlib_image_get_width ();
     int s_height = imlib_image_get_height ();
 
-    Imlib_Image image_dest = imlib_create_image (geometry->width,
-                                                 geometry->height);
+    Imlib_Image image_dest = imlib_create_image (
+            geometry->width, geometry->height);
     imlib_context_set_image (image_dest);
     imlib_context_set_color (0, 0, 0, 255);
-    imlib_image_fill_rectangle (0, 0,
-                                imlib_image_get_width (),
-                                imlib_image_get_height ());
-
+    imlib_image_fill_rectangle (
+            0, 0, imlib_image_get_width (), imlib_image_get_height ());
 
     int dest_x = (geometry->width - s_width) / 2;
     int dest_y = (geometry->height - s_height) / 2;
-    imlib_blend_image_onto_image (image, 0,
-                                  0, 0, s_width, s_height,
-                                  dest_x, dest_y, s_width, s_height);
+    imlib_blend_image_onto_image (
+            image, 0,
+            0, 0, s_width, s_height, dest_x, dest_y, s_width, s_height);
 
     return image_dest;
 }
@@ -216,10 +215,8 @@ render_tiled (struct geometry *geometry, Imlib_Image image)
 
     for (int x = 0; x < geometry->width; x += s_width) {
         for (int y = 0; y < geometry->height; y += s_height) {
-            imlib_blend_image_onto_image (image, 0,
-                                          0, 0, s_width, s_height,
-                                          x, y, s_width, s_height);
-
+            imlib_blend_image_onto_image (
+                    image, 0, 0, 0, s_width, s_height, x, y, s_width, s_height);
         }
     }
 

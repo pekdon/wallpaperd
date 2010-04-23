@@ -1,0 +1,12 @@
+2010-02-10  Claes Nästén  <me@pekdon.net>
+
+* configure.ac: add check for X11 lib and ensure it compiles on OpenBSD 4.6.
+* wallpaperd.c (do_start): Fork off to background when starting.
+* cfg.c (parse_config, validate_config): Be less specific about the required
+spacing, add comments support and validate configuration after parsing to
+ensure required options are set.
+* wallpaper.c (render_image): Implement center, zoom, fill and tiled modes.
+
+2010-02-08  Claes Nästén  <me@pekdon.net>
+
+* wallpaperd.c (main): Create wallpaperd project

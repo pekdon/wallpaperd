@@ -13,14 +13,16 @@ static void x11_set_geometry_size(struct geometry *geometry, int x, int y,
 /**
  * Open a connection to the X11 display if not already open.
  */
-void
+int
 x11_open_display (void)
 {
     if (DISPLAY != 0) {
-        return;
+        return 1;
     }
 
     DISPLAY = XOpenDisplay (0);
+
+    return 1;
 }
 
 /**
