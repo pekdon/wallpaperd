@@ -37,9 +37,9 @@ wallpaperd requires:
 
 To install (download, extract, configure, compile and install) execute:
 
- $ wget http://pekdon.net/uploads/2010/02/wallpaperd-0.1.5.tar.gz
- $ tar xvzf wallpaperd-0.1.5.tar.gz
- $ cd wallpaperd-0.1.5
+ $ wget http://pekdon.net/uploads/2010/02/wallpaperd-0.1.6.tar.gz
+ $ tar xvzf wallpaperd-0.1.6.tar.gz
+ $ cd wallpaperd-0.1.6
  $ ./configure
  $ make
  $ sudo make install

@@ -67,6 +67,7 @@ static int is_image_file_ext (const char *name);
 static const char *IMAGE_EXTS[] = {"png", "jpg", 0};
 
 static int do_reload_flag = 0;
+static int do_next_flag = 0;
 static int do_shutdown_flag = 0;
 
 struct options *OPTIONS = 0;
@@ -75,19 +76,16 @@ struct config *CONFIG = 0;
 /**
  * Handler for HUP signal, set reload flag.
  */
-void
-sighandler_hup (int signal)
+static void
+sighandler_hup_int_usr1 (int signal)
 {
-    do_reload_flag = 1;
-}
-
-/**
- * Handler for INT signal, set shutdown flag.
- */
-void
-sighandler_int (int signal)
-{
-    do_shutdown_flag = 1;
+    if (signal == SIGHUP) {
+        do_reload_flag = 1;
+    } else if (signal == SIGINT) {
+        do_shutdown_flag = 1;
+    } else if (signal == SIGUSR1) {
+        do_next_flag = 1;
+    }
 }
 
 /**
@@ -177,8 +175,9 @@ do_start (void)
 
         /* Setup signal handlers, INT for controlled shutdown and
            HUP for reload */
-        signal (SIGINT, &sighandler_int);
-        signal (SIGHUP, &sighandler_hup);
+        signal (SIGINT, &sighandler_hup_int_usr1);
+        signal (SIGHUP, &sighandler_hup_int_usr1);
+        signal (SIGUSR1, &sighandler_hup_int_usr1);
 
         /* Go into background */
         if (! OPTIONS->foreground) {
@@ -334,7 +333,10 @@ main_loop (void)
 
         if (do_reload_flag) {
             do_reload ();
-            do_reload_flag = 1;
+            do_reload_flag = 0;
+        }
+        if (do_next_flag) {
+            do_next_flag = next_interval = 0;
         }
 
         main_loop_check_change_interval (&next_interval);
@@ -539,12 +541,18 @@ find_wallpaper_by_name (const char *name)
 char*
 find_wallpaper_random (void)
 {
+    static int image_select_last = -1;
     char *path = 0;
 
     /* Count and select random image. */
-    int num = count_and_select_image_in_search_path (-1, 0);
+    int num = count_and_select_image_in_search_path (-1, &path);
     if (num > 0) {
-        int image_select = random () % num;
+        int image_select;
+        do {
+            image_select = random () % num;
+        } while (num > 1 && image_select == image_select_last);
+        image_select_last = image_select;
+
         image_select = count_and_select_image_in_search_path (
             image_select, &path);
     }
@@ -564,6 +572,7 @@ count_and_select_image_in_search_path (int image_select, char **path_ret)
 
     /* Count and select random directory. */
     int num = 0;
+    *path_ret = 0;
     for (int i = 0; search_path[i] != 0; i++) {
         DIR *dirp = opendir (search_path[i]);
         if (! dirp) {
@@ -571,10 +580,9 @@ count_and_select_image_in_search_path (int image_select, char **path_ret)
         }
 
         struct dirent *entry;
-        while (num != image_select
-               && (entry = readdir (dirp)) != 0) {
+        while (*path_ret == 0 && (entry = readdir (dirp)) != 0) {
             if (is_image_file_ext (entry->d_name)) {
-                select_image (++num, image_select,
+                select_image (num++, image_select,
                               search_path[i], entry->d_name, path_ret);
             }
         }
@@ -592,10 +600,9 @@ void
 select_image (int num, int image_select,
               const char *path, const char *name, char **path_ret)
 {
-    if (image_select >= 0 && num == image_select) {
+    if (image_select > -1 && num == image_select) {
         if (asprintf (path_ret, "%s/%s", path, name) == -1) {
             fprintf (stderr, "failed to construct full path for %s", name);
-
         }
     }
 }

@@ -1,5 +1,15 @@
 2010-02-12  Claes Nästén  <me@pekdon.net>
 
+	* main.c (sighandler_hup_int_usr1): Added handler for USR1 causing the
+	next random image to be selected.
+	* main.c (main_loop): Fixed bug in reload hadnling causing the
+	configuration to be reloaded for each event after HUP signal.
+	* main.c (find_wallpaper_random): Improve random selection by not using
+	the same index twice in a row, also fixed bug not selecting the first
+	element.
+
+2010-02-12  Claes Nästén  <me@pekdon.net>
+
 	* cfg.c (get_bg_select_mode): Add config.mode option to the
 	configuration that can have values NUMBER, NAME and RANDOM (not
 	yet implemented).
