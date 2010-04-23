@@ -3,7 +3,13 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
+#define _GNU_SOURCE
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <X11/Xlib.h>
 
@@ -18,6 +24,8 @@ static void handle_property_event (XEvent *ev);
 static void handle_xrandr_event (XEvent *ev);
 
 static void set_wallpaper_for_current_desktop (void);
+
+static char *find_wallpaper (const char *name);
 
 static Atom DESKTOP_ATOM;
 static struct config *CONFIG;
@@ -40,6 +48,7 @@ main (int argc, char **argv)
     set_wallpaper_for_current_desktop ();
     main_loop ();
 
+    wallpaper_cache_clear ();    
     x11_close_display ();
     mem_free (cfg_path);
 
@@ -94,13 +103,42 @@ void
 set_wallpaper_for_current_desktop (void)
 {
     long current_desktop = x11_get_atom_value_long (x11_get_root_window (),
-                                                    DESKTOP_ATOM);
+                                                    DESKTOP_ATOM) + 1;
 
-    const char *path = cfg_get_wallpaper (CONFIG, current_desktop);
+    const char *name = cfg_get_wallpaper (CONFIG, current_desktop);
     const char *mode_str = cfg_get_mode (CONFIG, current_desktop);
     enum wallpaper_mode mode = wallpaper_mode_from_str (mode_str);
 
-    if (path) {
-        wallpaper_set (path, mode);
+    if (name) {
+        char *path = find_wallpaper (name);
+        if (path) {
+            wallpaper_set (path, mode);
+            mem_free (path);
+        }
     }
+}
+
+/**
+ * Find wallpaper in search path.
+ */
+char*
+find_wallpaper (const char *name)
+{
+    if (name[0] == '/') {
+        return strdup (name);
+    }
+
+    const char **search_path = cfg_get_search_path (CONFIG);
+
+    char *path;
+    struct stat buf;
+    for (int i = 0; search_path[i] != 0; i++) {
+        if (asprintf (&path, "%s/%s", search_path[i], name) != -1
+            && ! stat (path, &buf)) {
+            return path;
+        }
+        mem_free (path);
+    }
+
+    return 0;
 }

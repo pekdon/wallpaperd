@@ -1,0 +1,51 @@
+wallpaperd is a small application that takes care of setting the
+background image. wallpaperd was created due to a friend requesting to
+have different wallpapers on the different workspaces in pekwm.
+
+=== Features ===
+
+wallpaperd now supports:
+
+* Changing wallpaper on workspace change.
+
+plans for implementing support for:
+
+* Support for specifying centered, zoomed, tiled and fill image modes.
+* Changing wallpaper every X amount of time.
+* Selecting wallpaper based on workspace name.
+* RANDR support re-setting the wallpaper on screen resolution changes.
+* RANDR support having per screen wallpapers.
+
+=== Installation ===
+
+wallpaperd requires:
+
+* Xlib, X11 development files.
+* Imlib2, Image loading and manipulation
+
+To install (download, extract, configure, compile and install) execute:
+
+ $ wget http://pekdon.net/uploads/2010/02/wallpaperd-0.1.1.tar.gz
+ $ tar xvzf wallpaperd-0.1.1.tar.gz
+ $ cd wallpaperd-0.1.1
+ $ ./configure
+ $ make
+ $ sudo make install
+
+=== Configuration ===
+
+wallpaperd is configured in ~/.wallpaperd.cfg which is a simple
+section free ini style configuration file.
+
+An example configuration file setting the special wallpaper 1600.jpg
+on desktop 4 and Good_Vibrations-1680x1050.jpg on the others could
+look something like:
+
+ path.search=~/Pictures:~/Pictures/Wallpapers
+ config.use_desktop_name=0
+ config.random_image=0
+ config.random_interval=3600
+ wallpaper.default.image=Good_Vibrations-1680x1050.jpg
+ wallpaper.default.mode=CENTERED
+ wallpaper.4.image=1600.jpg
+ wallpaper.4.mode=CENTERED

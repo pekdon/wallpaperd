@@ -84,7 +84,11 @@ wallpaper_cache_clear (void)
 void
 wallpaper_set_x11 (struct cache_node *node)
 {
-    x11_set_background_pixmap (x11_get_root_window (), node->pixmap);
+    static Pixmap last_pixmap = 0;
+    if (last_pixmap != node->pixmap) {
+        last_pixmap = node->pixmap;
+        x11_set_background_pixmap (x11_get_root_window (), node->pixmap);
+    }
 }
 
 Imlib_Image

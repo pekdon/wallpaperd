@@ -14,6 +14,10 @@
 static void parse_config (FILE *fp, struct config *config);
 static char *parse_line (FILE *fp, char *buf, size_t buf_size);
 
+static int count_and_add_search_paths (struct config *config,
+                                       const char *search_path_opt,
+                                       int count_only);
+
 /**
  * Load configuration.
  */
@@ -84,6 +88,46 @@ cfg_get_mode (struct config *config, long desktop)
     }
 
     return mode_str;
+}
+
+const char**
+cfg_get_search_path (struct config *config)
+{
+    if (!config->search_path) {
+        const char *search_path_opt = cfg_get (config, "path.search");
+        if (! search_path_opt) {
+            search_path_opt = ".:~:~/Pictures";
+        }
+
+        int num;
+        num = count_and_add_search_paths (config, search_path_opt, 1);
+        config->search_path = mem_new (sizeof(char*) * (num + 1));
+        num = count_and_add_search_paths (config, search_path_opt, 0);
+        config->search_path[num] = 0;
+    }
+
+    return config->search_path;
+}
+
+int
+count_and_add_search_paths (struct config *config,
+                            const char *search_path_opt, int count_only)
+{
+    
+    char *search_path_buf = strdup (search_path_opt);
+
+    int pos;
+    char *tok = strtok (search_path_buf, ":");
+    for (pos = 0; tok != 0; pos++) {
+        if (! count_only) {
+            config->search_path[pos] = expand_home (tok);
+        }
+        tok = strtok (0, ":");
+    }
+
+    mem_free (search_path_buf);
+
+    return pos;
 }
 
 /**
