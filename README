@@ -7,14 +7,26 @@ have different wallpapers on the different workspaces in pekwm.
 wallpaperd now supports:
 
 * Changing wallpaper on workspace change.
+* Support for specifying centered, zoomed, tiled and fill image modes.
+* Setting background Atom hint.
 
 plans for implementing support for:
 
-* Support for specifying centered, zoomed, tiled and fill image modes.
 * Changing wallpaper every X amount of time.
 * Selecting wallpaper based on workspace name.
 * RANDR support re-setting the wallpaper on screen resolution changes.
 * RANDR support having per screen wallpapers.
+
+=== Supported platforms ===
+
+wallpaperd is known to compile and run on the following platforms:
+
+* Ubuntu 9.10
+* OpenBSD 4.6
+* OS X 10.6
+* OpenSolaris 2009.06, both with GCC and Sun Studio compiler. Requires
+  SUNWgnome-common-devel and SUNWxorg-headers packages. Imlib2 is not included
+  in the standard package repository.
 
 === Installation ===
 
@@ -25,9 +37,9 @@ wallpaperd requires:
 
 To install (download, extract, configure, compile and install) execute:
 
- $ wget http://pekdon.net/uploads/2010/02/wallpaperd-0.1.3.tar.gz
- $ tar xvzf wallpaperd-0.1.3.tar.gz
- $ cd wallpaperd-0.1.3
+ $ wget http://pekdon.net/uploads/2010/02/wallpaperd-0.1.4.tar.gz
+ $ tar xvzf wallpaperd-0.1.4.tar.gz
+ $ cd wallpaperd-0.1.4
  $ ./configure
  $ make
  $ sudo make install

@@ -1,3 +1,10 @@
+/*
+ * x11.h for wallpaperd
+ * Copyright (C) 2010 Claes Nästén <me@pekdon.net>
+ *
+ * This program is licensed under the MIT license.
+ * See the LICENSE file for more information.
+ */
 
 #ifndef _X11_H_
 #define _X11_H_
@@ -20,6 +27,10 @@ struct geometry {
     struct geometry *next;
 };
 
+extern Atom ATOM_DESKTOP;
+extern Atom ATOM_DESKTOP_NAMES;
+extern Atom ATOM_ROOTPMAP_ID;
+
 extern int x11_open_display (void);
 extern void x11_close_display (void);
 
@@ -37,5 +48,7 @@ extern int x11_next_event (XEvent *ev);
 extern Atom x11_get_xrandr_event (void);
 extern Atom x11_get_atom (const char *atom_name);
 extern long x11_get_atom_value_long (Window window, Atom atom);
+extern void x11_set_atom_value_long (Window window, Atom atom,
+                                     long format, long value);
 
 #endif /* _X11_H_ */

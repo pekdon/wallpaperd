@@ -1,3 +1,10 @@
+/*
+ * wallpaper.c for wallpaperd
+ * Copyright (C) 2010 Claes Nästén <me@pekdon.net>
+ *
+ * This program is licensed under the MIT license.
+ * See the LICENSE file for more information.
+ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -6,13 +13,14 @@
 #include <string.h>
 #include <strings.h>
 #include <Imlib2.h>
+#include <X11/Xatom.h>
 
 #include "cache.h"
 #include "wallpaper.h"
 #include "util.h"
 #include "x11.h"
 
-static struct cache *CACHE;
+static struct cache *CACHE = 0;
 
 static void wallpaper_set_x11 (struct cache_node *node);
 
@@ -30,7 +38,7 @@ void
 wallpaper_set (const char *path, enum wallpaper_mode mode)
 {
     if (! CACHE) {
-        CACHE = cache_new (); /* FIXME: Initialize elsewhere? */
+        wallpaper_cache_clear (1);
     }
 
     struct cache_node *node = cache_get_pixmap (CACHE, path, mode);
@@ -74,10 +82,14 @@ wallpaper_mode_from_str (const char *str)
  * Invalidate all cache data.
  */
 void
-wallpaper_cache_clear (void)
+wallpaper_cache_clear (int do_alloc)
 {
-    cache_free (CACHE);
-    CACHE = cache_new ();
+    if (CACHE != 0) {
+        cache_free (CACHE);
+    }
+    if (do_alloc) {
+        CACHE = cache_new ();
+    }
 }
 
 /**
@@ -89,6 +101,9 @@ wallpaper_set_x11 (struct cache_node *node)
     static Pixmap last_pixmap = 0;
     if (last_pixmap != node->pixmap) {
         last_pixmap = node->pixmap;
+
+        x11_set_atom_value_long (x11_get_root_window (), ATOM_ROOTPMAP_ID,
+                                 XA_PIXMAP, node->pixmap);
         x11_set_background_pixmap (x11_get_root_window (), node->pixmap);
     }
 }
@@ -147,19 +162,19 @@ Imlib_Image
 render_zoom (struct geometry *geometry, Imlib_Image image)
 {
     imlib_context_set_image (image);
-    int s_width = imlib_image_get_width ();
-    int s_height = imlib_image_get_height ();
+    float s_width = imlib_image_get_width ();
+    float s_height = imlib_image_get_height ();
 
-    float s_aspect = (float) s_width / s_height;
+    float s_aspect = s_width / s_height;
     float d_aspect = (float) geometry->width / geometry->height;
 
     int d_width, d_height;
     if (s_aspect > d_aspect) {
-        d_width = geometry->width / s_aspect * d_aspect;
+        d_width = geometry->height * (s_width / s_height);
         d_height = geometry->height;
     } else {
         d_width = geometry->width;
-        d_height = geometry->height / s_aspect * d_aspect;
+        d_height = geometry->width * (s_height / s_width);
     }
 
     Imlib_Image image_zoom = imlib_create_cropped_scaled_image (

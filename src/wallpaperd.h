@@ -1,3 +1,10 @@
+/*
+ * wallpaperd.h for wallpaperd
+ * Copyright (C) 2010 Claes Nästén <me@pekdon.net>
+ *
+ * This program is licensed under the MIT license.
+ * See the LICENSE file for more information.
+ */
 
 #ifndef _WALLPAPERD_H_
 #define _WALLPAPERD_H_
@@ -6,8 +13,18 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
-#include <X11/Xlib.h>
+#include "cfg.h"
 
-extern void cache_invalidate (void);
+/**
+ * Command line options structure.
+ */
+struct options {
+    int help;
+    int foreground;
+    int stop;
+};
+
+extern struct options *OPTIONS;
+extern struct config *CONFIG;
 
 #endif /* _WALLPAPERD_H_ */

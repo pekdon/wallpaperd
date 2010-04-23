@@ -1,5 +1,5 @@
 dnl init autoconf / automake
-AC_INIT(wallpaperd, 0.1.3)
+AC_INIT(wallpaperd, 0.1.4)
 AC_CONFIG_SRCDIR(src/wallpaperd.c)
 AM_INIT_AUTOMAKE
 AM_CONFIG_HEADER(config.h)
@@ -33,6 +33,9 @@ fi
 
 AC_SUBST(xlib_CFLAGS)
 AC_SUBST(xlib_LIBS)
+
+dnl check for daemon call
+AC_CHECK_FUNC(daemon, [AC_DEFINE(HAVE_DAEMON, [1], [define to 1 if you daemon call in the C library])])
 
 dnl check required libraries
 PKG_CHECK_MODULES([imlib2], [imlib2 >= 1.0.0], HAVE_IMLIB2=yes, HAVE_IMLIB2=no)

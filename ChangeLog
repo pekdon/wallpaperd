@@ -1,12 +1,29 @@
+2010-02-11  Claes Nästén  <me@pekdon.net>
+
+	* LICENSE: Added MIT license and Copyright notice to source files.
+	* wallpaper.c (wallpaper_set_x11): set _XROOTPMAP_ID to allow
+	semi-transparent applications use the currently set wallpaper.
+	* wallpaperd.c (do_start): Replace currently running daemon when
+	starting.
+	* wallpaperd.c (do_stop): Implement stopping of running daemon.
+	* wallpaperd.c (sighandler_int, sighandler_hup): Setup signal handlers
+	for INT (stop) and HUP (reload).
+	* wallpaperd.c (parse_options, usage): Fix bug in parse_options letting
+	making stop fall through and add more details to help screen.
+	* compat.c (daemon): Implement compatibility daemon call for
+	compilation under OpenSolaris.
+
 2010-02-10  Claes Nästén  <me@pekdon.net>
 
-* configure.ac: add check for X11 lib and ensure it compiles on OpenBSD 4.6.
-* wallpaperd.c (do_start): Fork off to background when starting.
-* cfg.c (parse_config, validate_config): Be less specific about the required
-spacing, add comments support and validate configuration after parsing to
-ensure required options are set.
-* wallpaper.c (render_image): Implement center, zoom, fill and tiled modes.
+	* configure.ac: add check for X11 lib and ensure it compiles on
+	OpenBSD 4.6.
+	* wallpaperd.c (do_start): Fork off to background when starting.
+	* cfg.c (parse_config, validate_config): Be less specific about
+	the required spacing, add comments support and validate
+	configuration after parsing to ensure required options are set.
+	* wallpaper.c (render_image): Implement center, zoom, fill and
+	tiled modes.
 
 2010-02-08  Claes Nästén  <me@pekdon.net>
 
-* wallpaperd.c (main): Create wallpaperd project
+	* wallpaperd.c (main): Create wallpaperd project

@@ -1,3 +1,10 @@
+/*
+ * util.h for wallpaperd
+ * Copyright (C) 2010 Claes Nästén <me@pekdon.net>
+ *
+ * This program is licensed under the MIT license.
+ * See the LICENSE file for more information.
+ */
 
 #ifndef _UTIL_H_
 #define _UTIL_H_

@@ -1,4 +1,13 @@
+/*
+ * x11.c for wallpaperd
+ * Copyright (C) 2010 Claes Nästén <me@pekdon.net>
+ *
+ * This program is licensed under the MIT license.
+ * See the LICENSE file for more information.
+ */
 
+#include <sys/select.h>
+#include <string.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 
@@ -7,6 +16,11 @@
 
 static Display *DISPLAY = 0;
 
+Atom ATOM_DESKTOP = 0;
+Atom ATOM_DESKTOP_NAMES = 0;
+Atom ATOM_ROOTPMAP_ID = 0;
+
+static void x11_init_atoms (void);
 static void x11_set_geometry_size(struct geometry *geometry, int x, int y,
                                   unsigned int width, unsigned int height);
 
@@ -21,8 +35,20 @@ x11_open_display (void)
     }
 
     DISPLAY = XOpenDisplay (0);
+    x11_init_atoms ();
 
     return 1;
+}
+
+/**
+ * Initialize atoms after opening the display.
+ */
+void
+x11_init_atoms (void)
+{
+    ATOM_DESKTOP = x11_get_atom ("_NET_CURRENT_DESKTOP");
+    ATOM_DESKTOP_NAMES = x11_get_atom ("_NET_DESKTOP_NAMES");
+    ATOM_ROOTPMAP_ID =  x11_get_atom ("_XROOTPMAP_ID");
 }
 
 /**
@@ -135,12 +161,28 @@ x11_init_event_listeners (void)
 }
 
 /**
- * Get the next event.
+ * Get the next event, return 1 if event was retrived before interrupted.
  */
 int
 x11_next_event (XEvent *ev)
 {
-    return XNextEvent (DISPLAY, ev);
+    if (XPending (DISPLAY) > 0) {
+        XNextEvent (DISPLAY, ev);
+        return 1;
+    }
+    XFlush (DISPLAY);
+
+    int fd = ConnectionNumber (DISPLAY);
+    fd_set rfds;
+    FD_ZERO (&rfds);
+    FD_SET (fd, &rfds);
+
+    int ret = select (fd + 1, &rfds, 0, 0, 0);
+    if (ret > 0) {
+        XNextEvent (DISPLAY, ev);
+    }
+
+    return ret > 0;
 }
 
 /**
@@ -192,4 +234,14 @@ x11_get_atom_value_long (Window window, Atom atom)
     }
 
     return value;
+}
+
+/**
+ * Set long value atom of format.
+ */
+void
+x11_set_atom_value_long (Window window, Atom atom, long format, long value)
+{
+    XChangeProperty (DISPLAY, window, atom, format, 32,
+                     PropModeReplace, (unsigned char*) &value, 1);
 }

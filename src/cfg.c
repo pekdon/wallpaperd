@@ -1,3 +1,10 @@
+/*
+ * cfg.c for wallpaperd
+ * Copyright (C) 2010 Claes Nästén <me@pekdon.net>
+ *
+ * This program is licensed under the MIT license.
+ * See the LICENSE file for more information.
+ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -8,9 +15,12 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "cfg.h"
 #include "util.h"
+
+static char *create_pid_path (void);
 
 static int validate_config (struct config *config);
 
@@ -21,29 +31,36 @@ static void parse_key_value (struct config *config, char *line);
 static int count_and_add_search_paths(
         struct config *config, const char *search_path_opt, int count_only);
 
+
 /**
- * Load configuration.
+ * Create new empty config structure.
  */
 struct config*
-cfg_load (const char *path)
+cfg_new (void)
 {
     struct config *config = mem_new (sizeof (struct config));
-    FILE *fp = fopen (path, "r");
-    if (fp != 0) {
-        config->path = strdup (path);
 
-        parse_config (fp, config);
-        if (! validate_config(config)) {
-            cfg_free (config);
-            config = 0;
-        }
-
-        fclose (fp);
-    } else {
-        die ("failed to open configuration file %s", path);
-    }
+    config->path = 0;
+    config->pid_path = create_pid_path();
+    config->search_path = 0;
+    config->first = 0;
+    config->last = 0;
 
     return config;
+}
+
+/**
+ * Create new string with the pid file path.
+ */
+char*
+create_pid_path (void)
+{
+    char *pid_path;
+    uid_t uid = getuid ();
+    if (asprintf (&pid_path, "/tmp/.wallpaperd.%d.pid", uid) == -1) {
+        die ("failed to construct pid path, aborting");
+    }
+    return pid_path;
 }
 
 /**
@@ -59,8 +76,35 @@ cfg_free (struct config *config)
         mem_free (config->search_path);
     }
 
+    mem_free (config->pid_path);
     mem_free (config->path);
     mem_free (config);
+}
+
+/**
+ * Load configuration.
+ */
+int
+cfg_load (struct config *config, const char *path)
+{
+    int status = 1;
+
+    FILE *fp = fopen (path, "r");
+    if (fp != 0) {
+        config->path = strdup (path);
+
+        parse_config (fp, config);
+        if (! validate_config(config)) {
+            cfg_free (config);
+            status = 0;
+        }
+
+        fclose (fp);
+    } else {
+        die ("failed to open configuration file %s", path);
+    }
+
+    return status;
 }
 
 /**
