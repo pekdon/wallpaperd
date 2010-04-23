@@ -14,8 +14,10 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <dirent.h>
 #include <signal.h>
 #include <unistd.h>
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,12 +44,27 @@ static pid_t get_pid_from_pid_file (void);
 static void clean_pid_file (void);
 
 static void main_loop (void);
+static void main_loop_check_change_interval (time_t *next_interval);
+static int get_next_event_wait (time_t next_interval);
 static void handle_property_event (XEvent *ev);
 static void handle_xrandr_event (XEvent *ev);
 
 static void set_wallpaper_for_current_desktop (void);
+static void set_wallpaper_name (long desktop);
+static void set_wallpaper_number (long desktop);
+static void set_wallpaper_random (void);
+static void set_wallpaper_and_free (char *path, enum wallpaper_mode mode);
 
 static char *find_wallpaper (const char *name);
+static char *find_wallpaper_by_name (const char *name);
+static char *find_wallpaper_random (void);
+static int count_and_select_image_in_search_path (int image_select,
+                                                  char **path_ret);
+static void select_image (int num, int image_select,
+                          const char *path, const char *name, char **path_ret);
+static int is_image_file_ext (const char *name);
+
+static const char *IMAGE_EXTS[] = {"png", "jpg", 0};
 
 static int do_reload_flag = 0;
 static int do_shutdown_flag = 0;
@@ -308,15 +325,19 @@ clean_pid_file (void)
 void
 main_loop (void)
 {
+    time_t next_interval = time (0) + CONFIG->bg_interval;
+
     XEvent ev;
     int ev_status;
-    while (! do_shutdown_flag) {
-        ev_status = x11_next_event (&ev);
+    while (! do_shutdown_flag) {        
+        ev_status = x11_next_event (&ev, get_next_event_wait (next_interval));
 
         if (do_reload_flag) {
             do_reload ();
             do_reload_flag = 1;
         }
+
+        main_loop_check_change_interval (&next_interval);
 
         if (ev_status) {
             if (ev.type == PropertyNotify) {
@@ -329,17 +350,57 @@ main_loop (void)
 }
 
 /**
+ * Get number of seconds to wait for next event, -1 if bg_select_mode
+ * != RANDOM.
+ */
+int
+get_next_event_wait (time_t next_interval)
+{
+    if (CONFIG->bg_select_mode == RANDOM && CONFIG->bg_interval > 0) {
+        time_t next = next_interval - time (0);
+        return next > 0 ? next : 1;
+    } else {
+        return -1;
+    }
+}
+
+/**
+ * Check if background change interval has been reached, if so set a
+ * new background and update next_interval.
+ */
+void
+main_loop_check_change_interval (time_t *next_interval)
+{
+    if (CONFIG->bg_select_mode == RANDOM && CONFIG->bg_interval > 0) {
+        if (time (0) > *next_interval) {
+            set_wallpaper_for_current_desktop ();
+            *next_interval = time (0) + CONFIG->bg_interval;
+        }
+    }
+}
+
+
+/**
  * Handle property event, detects desktop changes.
  */
 void
 handle_property_event (XEvent *ev)
 {
-    if (ev->xproperty.window != x11_get_root_window ()
-        || ev->xproperty.atom != ATOM_DESKTOP) {
+    if (ev->xproperty.window != x11_get_root_window ()) {
         return;
     }
 
-    set_wallpaper_for_current_desktop ();
+    int do_update = 0;
+    if (ev->xproperty.atom == ATOM_DESKTOP) {
+        do_update = 1;
+    } else if (ev->xproperty.atom == ATOM_DESKTOP_NAMES) {
+        x11_get_desktop_names (1);
+        do_update = 1;
+    }
+
+    if (do_update && CONFIG->bg_select_mode != RANDOM) {
+        set_wallpaper_for_current_desktop ();
+    }
 }
 
 /**
@@ -362,16 +423,67 @@ set_wallpaper_for_current_desktop (void)
     long current_desktop = x11_get_atom_value_long (x11_get_root_window (),
                                                     ATOM_DESKTOP) + 1;
 
-    const char *name = cfg_get_wallpaper (CONFIG, current_desktop);
-    const char *mode_str = cfg_get_mode (CONFIG, current_desktop);
-    enum wallpaper_mode mode = wallpaper_mode_from_str (mode_str);
+    switch (CONFIG->bg_select_mode) {
+    case NAME:
+        set_wallpaper_name (current_desktop);
+        break;
+    case NUMBER:
+        set_wallpaper_number (current_desktop);
+        break;
+    case RANDOM:
+        set_wallpaper_random ();
+        break;
+    }
+}
 
+/**
+ * Set wallpaper based on desktop name.
+ */
+void
+set_wallpaper_name (long desktop)
+{
+    const char *name = x11_get_desktop_name (desktop - 1);
+    char *path = 0;
     if (name) {
-        char *path = find_wallpaper (name);
-        if (path) {
-            wallpaper_set (path, mode);
-            mem_free (path);
-        }
+        path = find_wallpaper_by_name (name);
+    }
+    if (! path) {
+        name = cfg_get_wallpaper (CONFIG, -1);
+        path = find_wallpaper (name);
+    }
+    set_wallpaper_and_free (path, cfg_get_mode (CONFIG, desktop));
+}
+
+/**
+ * Set wallpaper based on desktop number.
+ */
+void
+set_wallpaper_number (long desktop)
+{
+    const char *name = cfg_get_wallpaper (CONFIG, desktop);
+    char *path = find_wallpaper (name);
+    set_wallpaper_and_free (path, cfg_get_mode (CONFIG, desktop));
+}
+
+/**
+ * Set wallpaper selecting random from the search path.
+ */
+void
+set_wallpaper_random (void)
+{
+    char *path = find_wallpaper_random ();
+    set_wallpaper_and_free (path, cfg_get_mode (CONFIG, -1));
+}
+
+/**
+ * If path != 0, set wallpaper and free path.
+ */
+void
+set_wallpaper_and_free (char *path, enum wallpaper_mode mode)
+{
+    if (path) {
+        wallpaper_set (path, mode);
+        mem_free (path);
     }
 }
 
@@ -397,5 +509,107 @@ find_wallpaper (const char *name)
         mem_free (path);
     }
 
+    return 0;
+}
+
+/**
+ * Find wallpaper by name.
+ */
+char*
+find_wallpaper_by_name (const char *name)
+{
+    char *path, *test_name;
+    for (int i = 0; IMAGE_EXTS[i] != 0; i++) {
+        if (asprintf (&test_name, "%s.%s", name, IMAGE_EXTS[i]) != 1) {
+            path = find_wallpaper (test_name);
+            mem_free (test_name);
+
+            if (path != 0) {
+                return path;
+            }
+        }
+    }
+
+    return 0;
+}
+
+/**
+ * Select a random image from image search directories.
+ */
+char*
+find_wallpaper_random (void)
+{
+    char *path = 0;
+
+    /* Count and select random image. */
+    int num = count_and_select_image_in_search_path (-1, 0);
+    if (num > 0) {
+        int image_select = random () % num;
+        image_select = count_and_select_image_in_search_path (
+            image_select, &path);
+    }
+
+    return path;
+}
+
+
+/**
+ * Count images in search path, if image_select >= 0 select that
+ * image and store full path in path_ret.
+ */
+int
+count_and_select_image_in_search_path (int image_select, char **path_ret)
+{
+    char **search_path = cfg_get_search_path (CONFIG);
+
+    /* Count and select random directory. */
+    int num = 0;
+    for (int i = 0; search_path[i] != 0; i++) {
+        DIR *dirp = opendir (search_path[i]);
+        if (! dirp) {
+            continue;
+        }
+
+        struct dirent *entry;
+        while (num != image_select
+               && (entry = readdir (dirp)) != 0) {
+            if (is_image_file_ext (entry->d_name)) {
+                select_image (++num, image_select,
+                              search_path[i], entry->d_name, path_ret);
+            }
+        }
+ 
+        closedir (dirp);
+    }
+
+    return num;
+}
+
+/**
+ * If num and image_select are equal, construct full path in path_ret.
+ */
+void
+select_image (int num, int image_select,
+              const char *path, const char *name, char **path_ret)
+{
+    if (image_select >= 0 && num == image_select) {
+        if (asprintf (path_ret, "%s/%s", path, name) == -1) {
+            fprintf (stderr, "failed to construct full path for %s", name);
+
+        }
+    }
+}
+
+/**
+ * Check if image has one of the valid image file extensions.
+ */
+int
+is_image_file_ext (const char *name)
+{
+    for (int i = 0; IMAGE_EXTS[i] != 0; i++) {
+        if (str_ends_with (name, IMAGE_EXTS[i])) {
+            return 1;
+        }
+    }
     return 0;
 }

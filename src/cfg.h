@@ -13,6 +13,11 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
+#include "wallpaperd.h"
+
+/**
+ * Single node used internally in the configuration struct.
+ */
 struct cfg_node {
     const char *key;
     const char *value;
@@ -20,10 +25,17 @@ struct cfg_node {
     struct cfg_node *next;
 };
 
+/**
+ * Parsed configuration structure.
+ */
 struct config {
     char *path;
     char *pid_path;
-    char **search_path;
+
+    enum bg_select_mode bg_select_mode;
+    long bg_interval;
+    char **_search_path;
+
     struct cfg_node *first;
     struct cfg_node *last;
 };
@@ -34,8 +46,8 @@ extern int cfg_load (struct config *config, const char *path);
 extern char *cfg_get_path (void);
 
 extern const char *cfg_get (struct config *config, const char *key);
-extern const char *cfg_get_wallpaper (struct config *config, long desktop);
-extern const char *cfg_get_mode (struct config *config, long desktop);
 extern char **cfg_get_search_path (struct config *config);
+extern const char *cfg_get_wallpaper (struct config *config, long desktop);
+extern enum wallpaper_mode cfg_get_mode (struct config *config, long desktop);
 
 #endif /* _CFG_H_ */

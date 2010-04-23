@@ -1,3 +1,22 @@
+2010-02-12  Claes Nästén  <me@pekdon.net>
+
+	* cfg.c (get_bg_select_mode): Add config.mode option to the
+	configuration that can have values NUMBER, NAME and RANDOM (not
+	yet implemented).
+	* x11.c (get_desktop_names): Implement reading of desktop names.
+	* wallpaperd.c (find_wallpaper_by_name): Add setting of wallpaper
+	mode based on the current workspace name.
+	* wallpaper.c (wallpaper_set): Fix bug in caused by missing
+	validation of loaded image data.
+	* cfg.c (read_config): Read values from configuration right after
+	parsing to avoid duplicate work.
+	* main.c: Renamed wallpaperd.c to main.c to avoid confusion with
+	header file scope.
+	* main.c (find_wallpaper_random): Implement random image selection
+	mode.
+	* x11.c (x11_get_xrandr_event): Add querying of XRANDR events and
+	reset wallpaper if screen setup changes.
+
 2010-02-11  Claes Nästén  <me@pekdon.net>
 
 	* LICENSE: Added MIT license and Copyright notice to source files.
@@ -6,10 +25,11 @@
 	* wallpaperd.c (do_start): Replace currently running daemon when
 	starting.
 	* wallpaperd.c (do_stop): Implement stopping of running daemon.
-	* wallpaperd.c (sighandler_int, sighandler_hup): Setup signal handlers
-	for INT (stop) and HUP (reload).
-	* wallpaperd.c (parse_options, usage): Fix bug in parse_options letting
-	making stop fall through and add more details to help screen.
+	* wallpaperd.c (sighandler_int, sighandler_hup): Setup signal
+	handlers for INT (stop) and HUP (reload).
+	* wallpaperd.c (parse_options, usage): Fix bug in parse_options
+	letting making stop fall through and add more details to help
+	screen.
 	* compat.c (daemon): Implement compatibility daemon call for
 	compilation under OpenSolaris.
 

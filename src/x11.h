@@ -30,6 +30,7 @@ struct geometry {
 extern Atom ATOM_DESKTOP;
 extern Atom ATOM_DESKTOP_NAMES;
 extern Atom ATOM_ROOTPMAP_ID;
+extern Atom ATOM_UTF8_STRING;
 
 extern int x11_open_display (void);
 extern void x11_close_display (void);
@@ -44,8 +45,10 @@ extern struct geometry *x11_get_geometry (void);
 extern void x11_set_background_pixmap (Window window, Pixmap pixmap);
 
 extern void x11_init_event_listeners (void);
-extern int x11_next_event (XEvent *ev);
-extern Atom x11_get_xrandr_event (void);
+extern int x11_next_event (XEvent *ev, int timeout);
+extern int x11_get_xrandr_event (void);
+extern const char *x11_get_desktop_name (int desktop);
+extern char **x11_get_desktop_names (int do_refresh);
 extern Atom x11_get_atom (const char *atom_name);
 extern long x11_get_atom_value_long (Window window, Atom atom);
 extern void x11_set_atom_value_long (Window window, Atom atom,

@@ -14,6 +14,7 @@
 
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -22,7 +23,12 @@
 
 static char *create_pid_path (void);
 
+static void read_config (struct config *config);
+static enum bg_select_mode read_bg_select_mode (struct config *config);
+static long read_interval (struct config *config);
 static int validate_config (struct config *config);
+
+static enum wallpaper_mode cfg_get_mode_from_str (const char *str);
 
 static void parse_config (FILE *fp, struct config *config);
 static char *parse_line (FILE *fp, char *buf, size_t buf_size);
@@ -42,7 +48,11 @@ cfg_new (void)
 
     config->path = 0;
     config->pid_path = create_pid_path();
-    config->search_path = 0;
+
+    config->bg_select_mode = NUMBER;
+    config->bg_interval = 0;
+    config->_search_path = 0;
+
     config->first = 0;
     config->last = 0;
 
@@ -69,11 +79,11 @@ create_pid_path (void)
 void
 cfg_free (struct config *config)
 {
-    if (config->search_path) {
-        for (int i = 0; config->search_path[i] != 0; i++) {
-            mem_free (config->search_path[i]);
+    if (config->_search_path) {
+        for (int i = 0; config->_search_path[i] != 0; i++) {
+            mem_free (config->_search_path[i]);
         }
-        mem_free (config->search_path);
+        mem_free (config->_search_path);
     }
 
     mem_free (config->pid_path);
@@ -94,10 +104,8 @@ cfg_load (struct config *config, const char *path)
         config->path = strdup (path);
 
         parse_config (fp, config);
-        if (! validate_config(config)) {
-            cfg_free (config);
-            status = 0;
-        }
+        read_config (config);
+        status = validate_config(config);
 
         fclose (fp);
     } else {
@@ -105,6 +113,55 @@ cfg_load (struct config *config, const char *path)
     }
 
     return status;
+}
+
+/**
+ * Read configuration parameters.
+ */
+void
+read_config (struct config *config)
+{
+
+    config->bg_select_mode = read_bg_select_mode (config);
+    config->bg_interval = read_interval (config);
+}
+
+/**
+ * Read bg select mode from configuration and convert mode string into
+ * bg_select_mode enum.
+ */
+enum bg_select_mode
+read_bg_select_mode (struct config *config)
+{
+    const char *mode_str = cfg_get (config, "config.mode");
+    enum bg_select_mode mode = NUMBER;
+
+    if (! mode_str || ! strcmp (mode_str, "NUMBER")) {
+    } else if (! strcmp (mode_str, "NAME")) {
+        mode = NAME;
+    } else if (! strcmp (mode_str, "RANDOM")) {
+        mode = RANDOM;
+    } else {
+        fprintf (stderr, "unknown selection mode %s, setting to NUMBER",
+                 mode_str);
+    }
+
+    return mode;
+}
+
+
+/**
+ * Read config.interval as long.
+ */
+long
+read_interval (struct config *config)
+{
+    long interval = -1;
+    const char *interval_str = cfg_get (config, "config.interval");
+    if (interval_str) {
+        interval = strtol (interval_str, 0, 10);
+    }
+    return interval;
 }
 
 /**
@@ -174,7 +231,7 @@ cfg_get_wallpaper (struct config *config, long desktop)
 /**
  * Get wallpaper configured for desktop.
  */
-const char*
+enum wallpaper_mode
 cfg_get_mode (struct config *config, long desktop)
 {
     const char *mode_str = 0;
@@ -189,7 +246,31 @@ cfg_get_mode (struct config *config, long desktop)
         mode_str = cfg_get (config, "wallpaper.default.mode");
     }
 
-    return mode_str;
+    return cfg_get_mode_from_str (mode_str);
+}
+
+
+/**
+ * Return wallpaper mode from string, defaults to CENTERED if parsing
+ * fails.
+ */
+enum wallpaper_mode
+cfg_get_mode_from_str (const char *str)
+{
+    enum wallpaper_mode mode = CENTERED;
+
+    if (! str) {
+    } else if (! strcasecmp (str, "CENTERED")) {
+        mode = CENTERED;
+    } else if (! strcasecmp (str, "TILED")) {
+        mode = TILED;
+    } else if (! strcasecmp (str, "FILLED")) {
+        mode = FILL;
+    } else if (! strcasecmp (str, "ZOOMED")) {
+        mode = ZOOM;
+    }
+
+    return mode;
 }
 
 /**
@@ -198,7 +279,7 @@ cfg_get_mode (struct config *config, long desktop)
 char**
 cfg_get_search_path (struct config *config)
 {
-    if (! config->search_path) {
+    if (! config->_search_path) {
         const char *search_path_opt = cfg_get (config, "path.search");
         if (! search_path_opt) {
             search_path_opt = ".:~:~/Pictures";
@@ -206,12 +287,12 @@ cfg_get_search_path (struct config *config)
 
         int num;
         num = count_and_add_search_paths (config, search_path_opt, 1);
-        config->search_path = mem_new (sizeof(char*) * (num + 1));
+        config->_search_path = mem_new (sizeof(char*) * (num + 1));
         num = count_and_add_search_paths (config, search_path_opt, 0);
-        config->search_path[num] = 0;
+        config->_search_path[num] = 0;
     }
 
-    return config->search_path;
+    return config->_search_path;
 }
 
 /**
@@ -229,7 +310,7 @@ count_and_add_search_paths (struct config *config,
     char *tok = strtok (search_path_buf, ":");
     for (pos = 0; tok != 0; pos++) {
         if (! count_only) {
-            config->search_path[pos] = expand_home (tok);
+            config->_search_path[pos] = expand_home (tok);
         }
         tok = strtok (0, ":");
     }

@@ -10,6 +10,7 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
+#include <stdio.h>
 #include <string.h>
 #include <strings.h>
 #include <Imlib2.h>
@@ -44,6 +45,10 @@ wallpaper_set (const char *path, enum wallpaper_mode mode)
     struct cache_node *node = cache_get_pixmap (CACHE, path, mode);
     if (! node) {
         Imlib_Image image = imlib_load_image (path);
+        if (! image) {
+            fprintf (stderr, "failed to set background from %s\n", path);
+            return;
+        }
         Imlib_Image image_rendered = render_image (image, mode);
         Pixmap pixmap = render_x11_pixmap (image_rendered);
         imlib_context_set_image (image);
@@ -53,29 +58,6 @@ wallpaper_set (const char *path, enum wallpaper_mode mode)
         node = cache_set_pixmap (CACHE, path, mode, pixmap);
     }
     wallpaper_set_x11 (node);
-}
-
-/**
- * Return wallpaper mode from string, defaults to CENTERED if parsing
- * fails.
- */
-enum wallpaper_mode
-wallpaper_mode_from_str (const char *str)
-{
-    enum wallpaper_mode mode = CENTERED;
-
-    if (! str) {
-    } else if (! strcasecmp (str, "CENTERED")) {
-        mode = CENTERED;
-    } else if (! strcasecmp (str, "TILED")) {
-        mode = TILED;
-    } else if (! strcasecmp (str, "FILLED")) {
-        mode = FILL;
-    } else if (! strcasecmp (str, "ZOOMED")) {
-        mode = ZOOM;
-    }
-
-    return mode;
 }
 
 /**

@@ -22,5 +22,7 @@ extern char *expand_home (const char *str);
 
 extern char *str_first_of (char *str, const char *of);
 extern char *str_first_not_of (char *str, const char *not_of);
+extern int str_starts_with (const char *str, const char *start);
+extern int str_ends_with (const char *str, const char *end);
 
 #endif /* _UTIL_H_ */

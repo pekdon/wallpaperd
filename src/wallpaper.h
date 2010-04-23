@@ -13,18 +13,9 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
-/**
- * Supported background modes.
- */
-enum wallpaper_mode {
-    CENTERED,
-    TILED,
-    FILL,
-    ZOOM
-};
+#include "wallpaperd.h"
 
 extern void wallpaper_set (const char *path, enum wallpaper_mode mode);
-extern enum wallpaper_mode wallpaper_mode_from_str (const char *str);
 extern void wallpaper_cache_clear (int do_alloc);
 
 #endif /* _WALLPAPER_H_ */

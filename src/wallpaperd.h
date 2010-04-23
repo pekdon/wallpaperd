@@ -13,7 +13,25 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
-#include "cfg.h"
+/**
+ * Background image selection mode
+ */
+enum bg_select_mode {
+    NUMBER,
+    NAME,
+    RANDOM
+};
+
+
+/**
+ * Supported background modes.
+ */
+enum wallpaper_mode {
+    CENTERED,
+    TILED,
+    FILL,
+    ZOOM
+};
 
 /**
  * Command line options structure.
@@ -23,6 +41,8 @@ struct options {
     int foreground;
     int stop;
 };
+
+#include "cfg.h"
 
 extern struct options *OPTIONS;
 extern struct config *CONFIG;

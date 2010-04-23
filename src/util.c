@@ -108,3 +108,30 @@ str_first_not_of (char *str, const char *not_of)
     }
     return 0;
 }
+
+/**
+ * Check if str starts with start.
+ */
+int
+str_starts_with (const char *str, const char *start)
+{
+    size_t start_len = strlen (start);
+    return strncmp (str, start, start_len) == 0;
+}
+
+/**
+ * Check if str ends with end.
+ */
+int
+str_ends_with (const char *str, const char *end)
+{
+    size_t str_len = strlen (str);
+    size_t end_len = strlen (end);
+
+    if (str_len < end_len) {
+        return 0;
+    } else {
+        return strcmp (str + str_len - end_len, end) == 0;
+    }
+
+}

@@ -1,6 +1,6 @@
 dnl init autoconf / automake
-AC_INIT(wallpaperd, 0.1.4)
-AC_CONFIG_SRCDIR(src/wallpaperd.c)
+AC_INIT(wallpaperd, 0.1.5)
+AC_CONFIG_SRCDIR(src/main.c)
 AM_INIT_AUTOMAKE
 AM_CONFIG_HEADER(config.h)
 
@@ -33,6 +33,12 @@ fi
 
 AC_SUBST(xlib_CFLAGS)
 AC_SUBST(xlib_LIBS)
+
+dnl check for xrandr
+PKG_CHECK_MODULES([xrandr], [xrandr >= 1.2.0], HAVE_XRANDR=yes, HAVE_XRANDR=no)
+if test "x$HAVE_XRANDR" = "xyes"; then
+    AC_DEFINE(HAVE_XRANDR, [1], [Define to 1 if you have an XRANDR capable client])
+fi
 
 dnl check for daemon call
 AC_CHECK_FUNC(daemon, [AC_DEFINE(HAVE_DAEMON, [1], [define to 1 if you daemon call in the C library])])
