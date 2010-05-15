@@ -32,6 +32,10 @@
 #include "util.h"
 #include "x11.h"
 
+#define IS_CONFIG_TIMED_MODE() \
+    (CONFIG->bg_select_mode == SET \
+     || (CONFIG->bg_select_mode == RANDOM && CONFIG->bg_interval > 0))
+
 static void parse_options (int argc, char **argv, struct options *options);
 static void usage (const char *name);
 static void do_start (void);
@@ -44,6 +48,7 @@ static pid_t get_pid_from_pid_file (void);
 static void clean_pid_file (void);
 
 static void main_loop (void);
+static void main_loop_set_interval (time_t *next_interval);
 static void main_loop_check_change_interval (time_t *next_interval);
 static int get_next_event_wait (time_t next_interval);
 static void handle_property_event (XEvent *ev);
@@ -53,6 +58,7 @@ static void set_wallpaper_for_current_desktop (void);
 static void set_wallpaper_name (long desktop);
 static void set_wallpaper_number (long desktop);
 static void set_wallpaper_random (void);
+static void set_wallpaper_set (void);
 static void set_wallpaper_and_free (char *path, enum wallpaper_mode mode);
 
 static char *find_wallpaper (const char *name);
@@ -324,7 +330,8 @@ clean_pid_file (void)
 void
 main_loop (void)
 {
-    time_t next_interval = time (0) + CONFIG->bg_interval;
+    time_t next_interval = 0;
+    main_loop_set_interval (&next_interval);
 
     XEvent ev;
     int ev_status;
@@ -353,16 +360,27 @@ main_loop (void)
 
 /**
  * Get number of seconds to wait for next event, -1 if bg_select_mode
- * != RANDOM.
+ * does not change at timed intervals.
  */
 int
 get_next_event_wait (time_t next_interval)
 {
-    if (CONFIG->bg_select_mode == RANDOM && CONFIG->bg_interval > 0) {
+    if (IS_CONFIG_TIMED_MODE()) {
         time_t next = next_interval - time (0);
         return next > 0 ? next : 1;
     } else {
         return -1;
+    }
+}
+
+
+void
+main_loop_set_interval (time_t *next_interval)
+{
+    if (CONFIG->bg_select_mode == RANDOM) {
+        *next_interval = time (0) + CONFIG->bg_interval;
+    } else if (CONFIG->bg_select_mode == SET) {
+        *next_interval = time (0) + CONFIG->bg_set->duration;
     }
 }
 
@@ -373,11 +391,9 @@ get_next_event_wait (time_t next_interval)
 void
 main_loop_check_change_interval (time_t *next_interval)
 {
-    if (CONFIG->bg_select_mode == RANDOM && CONFIG->bg_interval > 0) {
-        if (time (0) > *next_interval) {
-            set_wallpaper_for_current_desktop ();
-            *next_interval = time (0) + CONFIG->bg_interval;
-        }
+    if (IS_CONFIG_TIMED_MODE() && (time (0) > *next_interval)) {
+        set_wallpaper_for_current_desktop ();
+        main_loop_set_interval (next_interval);
     }
 }
 
@@ -435,6 +451,9 @@ set_wallpaper_for_current_desktop (void)
     case RANDOM:
         set_wallpaper_random ();
         break;
+    case SET:
+        set_wallpaper_set ();
+        break;
     }
 }
 
@@ -475,6 +494,18 @@ set_wallpaper_random (void)
 {
     char *path = find_wallpaper_random ();
     set_wallpaper_and_free (path, cfg_get_mode (CONFIG, -1));
+}
+
+/**
+ * Set wallpaper using background from wallpaper set.
+ */
+void
+set_wallpaper_set (void)
+{
+    struct background *bg = background_set_get_now (CONFIG->bg_set);
+    if (bg) {
+        wallpaper_set (bg->path, cfg_get_mode (CONFIG, -1));
+    }
 }
 
 /**

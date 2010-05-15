@@ -13,6 +13,7 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
+#include "background.h"
 #include "wallpaperd.h"
 
 /**
@@ -33,6 +34,8 @@ struct config {
     char *pid_path;
 
     enum bg_select_mode bg_select_mode;
+    struct background_set *bg_set;
+    
     long bg_interval;
     char **_search_path;
 

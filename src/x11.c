@@ -137,7 +137,7 @@ x11_get_colormap (void)
 
 /**
  * Return an array with head geometries, the first head is the
- * combined geometry of the display and the last entry is signalled
+ * combined geometry of the display and the last entry is identified
  * with width/height 0.
  */
 struct geometry*

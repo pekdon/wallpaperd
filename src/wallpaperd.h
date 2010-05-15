@@ -19,9 +19,9 @@
 enum bg_select_mode {
     NUMBER,
     NAME,
-    RANDOM
+    RANDOM,
+    SET
 };
-
 
 /**
  * Supported background modes.

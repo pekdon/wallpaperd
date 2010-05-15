@@ -3,6 +3,8 @@ AUTOMAKE_OPTIONS = foreign
 
 bin_PROGRAMS = wallpaperd
 wallpaperd_SOURCES = \
+	background.c background.h \
+	background_xml.c background_xml.h \
 	cache.c cache.h \
 	compat.c compat.h \
 	cfg.c cfg.h \

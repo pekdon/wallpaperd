@@ -18,6 +18,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "background_xml.h"
 #include "cfg.h"
 #include "util.h"
 
@@ -26,6 +27,7 @@ static char *create_pid_path (void);
 static void read_config (struct config *config);
 static enum bg_select_mode read_bg_select_mode (struct config *config);
 static long read_interval (struct config *config);
+static void read_bg_set (struct config *config);
 static int validate_config (struct config *config);
 
 static enum wallpaper_mode cfg_get_mode_from_str (const char *str);
@@ -50,6 +52,7 @@ cfg_new (void)
     config->pid_path = create_pid_path();
 
     config->bg_select_mode = NUMBER;
+    config->bg_set = 0;
     config->bg_interval = 0;
     config->_search_path = 0;
 
@@ -86,6 +89,10 @@ cfg_free (struct config *config)
         mem_free (config->_search_path);
     }
 
+    if (config->bg_set) {
+        background_set_free (config->bg_set);
+    }
+
     mem_free (config->pid_path);
     mem_free (config->path);
     mem_free (config);
@@ -97,6 +104,8 @@ cfg_free (struct config *config)
 int
 cfg_load (struct config *config, const char *path)
 {
+    /* FIXME: Plug memory leak on re-load. */
+
     int status = 1;
 
     FILE *fp = fopen (path, "r");
@@ -121,9 +130,12 @@ cfg_load (struct config *config, const char *path)
 void
 read_config (struct config *config)
 {
-
     config->bg_select_mode = read_bg_select_mode (config);
     config->bg_interval = read_interval (config);
+
+    if (config->bg_select_mode == SET) {
+        read_bg_set (config);
+    }
 }
 
 /**
@@ -141,6 +153,8 @@ read_bg_select_mode (struct config *config)
         mode = NAME;
     } else if (! strcmp (mode_str, "RANDOM")) {
         mode = RANDOM;
+    } else if (! strcmp (mode_str, "SET")) {
+        mode = SET;
     } else {
         fprintf (stderr, "unknown selection mode %s, setting to NUMBER",
                  mode_str);
@@ -148,7 +162,6 @@ read_bg_select_mode (struct config *config)
 
     return mode;
 }
-
 
 /**
  * Read config.interval as long.
@@ -162,6 +175,23 @@ read_interval (struct config *config)
         interval = strtol (interval_str, 0, 10);
     }
     return interval;
+}
+
+/**
+ * Read background set from configuration file.
+ */
+void
+read_bg_set (struct config *config)
+{
+    /* FIXME: Bail out on failure. */
+    const char *bg_set_path = cfg_get (config, "config.set");
+    if (bg_set_path) {
+        FILE *fp = fopen (bg_set_path, "r");
+        if (fp) {
+            config->bg_set = background_xml_parse (fp);
+            fclose (fp);
+        }
+    }
 }
 
 /**

@@ -74,6 +74,19 @@ expand_home (const char *str)
 }
 
 /**
+ * Wrapper for strdup, aborts if memory allocation fails.
+ */
+char*
+str_dup (const char *str_in)
+{
+    char *str = strdup (str_in);
+    if (str == 0) {
+        die ("strdup of %d bytes string failed, aborting!", strlen (str_in));
+    }
+    return str;
+}
+
+/**
  * Find first occurance of character in of.
  */
 char*
