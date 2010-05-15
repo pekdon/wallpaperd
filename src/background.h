@@ -19,6 +19,7 @@
 struct background {
     char *path;
     unsigned int duration;
+    unsigned int transition;
 
     struct background *next;
 };
@@ -31,9 +32,9 @@ struct background_set {
     unsigned int time;
     unsigned int duration;
 
-    unsigned int start_hour;
-    unsigned int start_minute;
-    unsigned int start_second;
+    unsigned int hour;
+    unsigned int min;
+    unsigned int sec;
 
     struct background *bg_curr;
     struct background *bg_first;
@@ -44,8 +45,14 @@ extern void background_set_free (struct background_set *bg_set);
 
 extern struct background *background_set_get_now (struct background_set *bg_set);
 
-extern void background_set_add_background (struct background_set *bg_set,
-                                           const char *path,
+extern struct background *background_set_add_background (struct background_set *bg_set,
+                                                         const char *path,
+                                                         unsigned int duration);
+extern void background_set_add_transition (struct background_set *bg_set,
+                                           struct background *bg,
+                                           const char *from, const char *to,
                                            unsigned int duration);
+
+extern void background_set_calculate_elapsed (struct background_set *bg_set);
 
 #endif /* _BACKGROUND_H_ */

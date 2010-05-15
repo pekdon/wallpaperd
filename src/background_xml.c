@@ -34,9 +34,10 @@ struct background_set*
 background_xml_parse (FILE *fp)
 {
     char tag[TAG_VALUE_SIZE], value[TAG_VALUE_SIZE], file[TAG_VALUE_SIZE];
+    char from[TAG_VALUE_SIZE], to[TAG_VALUE_SIZE];
     unsigned int duration;
 
-    struct background *bg_last = 0;
+    struct background *bg = 0;
     struct background_set *bg_set = background_set_new ();
 
     enum _background_xml_state state = _BACKGROUND_XML_SKIP;
@@ -44,13 +45,13 @@ background_xml_parse (FILE *fp)
         if (state == _BACKGROUND_XML_STARTTIME) {
             if (strcasecmp (tag, "hour") == 0) {
                 _read_value (fp, value);
-                bg_set->start_hour = atoi (value);
+                bg_set->hour = atoi (value);
             } else if (strcasecmp (tag, "minute") == 0) {
                 _read_value (fp, value);
-                bg_set->start_minute = atoi (value);
+                bg_set->min = atoi (value);
             } else if (strcasecmp (tag, "second") == 0) {
                 _read_value (fp, value);
-                bg_set->start_second = atoi (value);
+                bg_set->sec = atoi (value);
             } else if (strcasecmp (tag, "/starttime") == 0) {
                 state = _BACKGROUND_XML_SKIP;
             }
@@ -63,16 +64,20 @@ background_xml_parse (FILE *fp)
                 duration = (int) atof(value);
             } else if (strcasecmp (tag, "/static") == 0) {
                 state = _BACKGROUND_XML_SKIP;
-                background_set_add_background(bg_set, file, duration);
+                bg = background_set_add_background(bg_set, file, duration);
             }
 
         } else if (state == _BACKGROUND_XML_TRANSITION) {
-            /* FIXME: Find background based on from/to and add
-                      transition duration to duration. */
             if (strcasecmp (tag, "duration") == 0) {
                 _read_value (fp, value);
+                duration = atoi (value);
+            } else if (strcasecmp (tag, "from") == 0) {
+                _read_value (fp, from);
+            } else if (strcasecmp (tag, "to") == 0) {
+                _read_value (fp, to);
             } else if (strcasecmp (tag, "/transition") == 0) {
                 state = _BACKGROUND_XML_SKIP;
+                background_set_add_transition (bg_set, bg, from, to, duration);
             }
         } else if (strcasecmp (tag, "static") == 0) {
             state = _BACKGROUND_XML_STATIC;
@@ -84,6 +89,8 @@ background_xml_parse (FILE *fp)
             state = _BACKGROUND_XML_STARTTIME;
         }
     }
+
+    background_set_calculate_elapsed (bg_set);
 
     return bg_set;
 }

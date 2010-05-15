@@ -6,6 +6,7 @@
  * See the LICENSE file for more information.
  */
 
+#include <stdio.h>
 #include <time.h>
 
 #include "background.h"
@@ -21,11 +22,10 @@ background_set_new (void)
 
     bg_set->time = time (0);
     bg_set->duration = 0;
-    // FIXME: Calculate offset
 
-    bg_set->start_hour = 0;
-    bg_set->start_minute = 0;
-    bg_set->start_second = 0;
+    bg_set->hour = 0;
+    bg_set->min = 0;
+    bg_set->sec = 0;
 
     bg_set->bg_curr = 0;
     bg_set->bg_first = 0;
@@ -67,13 +67,17 @@ background_set_get_now (struct background_set *bg_set)
                 bg = bg->next;
             }
             if (! bg) {
+                /* How to handle end of the list, re-set the timer or
+                   just continue looping until reaching the end? */
                 bg = bg_set->bg_first;
             }
             time_elapsed -= bg->duration;
         }
     }
 
-    bg_set->duration = bg->duration;
+    /* Set duration to duration + transition until transitions are
+       supported */
+    bg_set->duration = bg->duration + bg->transition;
     bg_set->bg_curr = bg;
 
     return bg_set->bg_curr;
@@ -82,7 +86,7 @@ background_set_get_now (struct background_set *bg_set)
 /**
  * Add background to background_set.
  */
-void
+struct background*
 background_set_add_background (struct background_set *bg_set,
                                const char *path, unsigned int duration)
 {
@@ -90,6 +94,7 @@ background_set_add_background (struct background_set *bg_set,
 
     bg->path = str_dup (path);
     bg->duration = duration;
+    bg->transition = 0;
     bg->next = 0;
 
     if (bg_set->bg_first) {
@@ -100,4 +105,55 @@ background_set_add_background (struct background_set *bg_set,
     } else {
         bg_set->bg_first = bg;
     }
+
+    return bg;
+}
+
+/**
+ * Add transition time to first matching background, looking at the
+ * provided background first if next is 0.
+ */
+void
+background_set_add_transition (struct background_set *bg_set,
+                               struct background *bg,
+                               const char *from, const char *to,
+                               unsigned int duration)
+{
+    /* Start with checking the provided background, if from matches
+       and next is not set assume transition comes before the next
+       image. */
+    if (strcmp (bg->path, from) == 0 && ! bg->next) {
+        bg->transition = duration;
+    } else {
+        for (bg = bg_set->bg_first; bg && bg->next; bg = bg->next) {
+            if (strcmp (bg->path, from) == 0
+                && strcmp (bg->next->path, to) == 0) {
+                bg->transition = duration;
+                break;
+            }
+        }
+    }
+}
+
+/**
+ * Update offset time elapsed time is calculated from, should be
+ * called after adding all images to a background set.
+ */
+void
+background_set_calculate_elapsed (struct background_set *bg_set)
+{
+    time_t t = time (0);
+    struct tm *tm = localtime (&t);
+
+    unsigned int beg_s = bg_set->hour * 3600 + bg_set->min * 60 + bg_set->sec;
+    unsigned int cur_s = tm->tm_hour * 3600 + tm->tm_min * 60 + tm->tm_sec;
+
+    unsigned int elapsed_s;
+    if (beg_s > cur_s) {
+        elapsed_s = 86400 - cur_s;
+    } else {
+        elapsed_s = cur_s - beg_s;
+    }
+
+    bg_set->time = time (0) - elapsed_s;
 }
