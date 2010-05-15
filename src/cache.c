@@ -23,7 +23,7 @@ struct cache_node*
 cache_node_new (const char *path, enum wallpaper_mode mode, Pixmap pixmap)
 {
     struct cache_node *node = mem_new (sizeof (struct cache_node));
-    node->path = strdup (path);
+    node->path = str_dup (path);
     node->mode = mode;
     node->pixmap = pixmap;
     node->next = 0;

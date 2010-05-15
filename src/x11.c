@@ -211,7 +211,7 @@ x11_get_desktop_names (int do_refresh)
 
             DESKTOP_NAMES = mem_new (sizeof (char*) * (num + 1));
             for (p = (char*) data, i = 0, j = 0; i < data_length; j++) {
-                DESKTOP_NAMES[j] = strdup (p);
+                DESKTOP_NAMES[j] = str_dup (p);
                 i += strlen (p) + 1;
                 p += strlen (p) + 1;
             }

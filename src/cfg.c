@@ -24,6 +24,7 @@
 
 static char *create_pid_path (void);
 
+static void cfg_unload (struct config *config);
 static void read_config (struct config *config);
 static enum bg_select_mode read_bg_select_mode (struct config *config);
 static long read_interval (struct config *config);
@@ -82,16 +83,7 @@ create_pid_path (void)
 void
 cfg_free (struct config *config)
 {
-    if (config->_search_path) {
-        for (int i = 0; config->_search_path[i] != 0; i++) {
-            mem_free (config->_search_path[i]);
-        }
-        mem_free (config->_search_path);
-    }
-
-    if (config->bg_set) {
-        background_set_free (config->bg_set);
-    }
+    cfg_unload (config);
 
     mem_free (config->pid_path);
     mem_free (config->path);
@@ -104,13 +96,13 @@ cfg_free (struct config *config)
 int
 cfg_load (struct config *config, const char *path)
 {
-    /* FIXME: Plug memory leak on re-load. */
+    cfg_unload (config);
 
     int status = 1;
 
     FILE *fp = fopen (path, "r");
     if (fp != 0) {
-        config->path = strdup (path);
+        config->path = str_dup (path);
 
         parse_config (fp, config);
         read_config (config);
@@ -122,6 +114,36 @@ cfg_load (struct config *config, const char *path)
     }
 
     return status;
+}
+
+/**
+ * Unload configuration.
+ */
+void
+cfg_unload (struct config *config)
+{
+    if (config->_search_path) {
+        for (int i = 0; config->_search_path[i] != 0; i++) {
+            mem_free (config->_search_path[i]);
+        }
+        mem_free (config->_search_path);
+        config->_search_path = 0;
+    }
+
+    if (config->bg_set) {
+        background_set_free (config->bg_set);
+        config->bg_set = 0;
+    }
+
+    struct cfg_node *it, *it_next;
+    for (it = config->first; it; it = it_next) {
+        it_next = it->next;
+        mem_free (it->key);
+        mem_free (it->value);
+        mem_free (it);
+    }
+    config->first = 0;
+    config->last = 0;
 }
 
 /**
@@ -183,14 +205,20 @@ read_interval (struct config *config)
 void
 read_bg_set (struct config *config)
 {
-    /* FIXME: Bail out on failure. */
-    const char *bg_set_path = cfg_get (config, "config.set");
-    if (bg_set_path) {
-        FILE *fp = fopen (bg_set_path, "r");
+    const char *path = cfg_get (config, "config.set");
+    if (path) {
+        char *path_expanded = expand_home (path);
+
+        FILE *fp = fopen (path_expanded, "r");
         if (fp) {
             config->bg_set = background_xml_parse (fp);
             fclose (fp);
+        } else {
+            die ("failed to open config.set configuration at %s",
+                 path_expanded);
         }
+    } else {
+        die ("no config.set option available in configuration.");
     }
 }
 
@@ -334,7 +362,7 @@ count_and_add_search_paths (struct config *config,
                             const char *search_path_opt, int count_only)
 {
     
-    char *search_path_buf = strdup (search_path_opt);
+    char *search_path_buf = str_dup (search_path_opt);
 
     int pos;
     char *tok = strtok (search_path_buf, ":");
@@ -366,8 +394,8 @@ void
 cfg_add_node (struct config *config, const char *key, const char *value)
 {
     struct cfg_node *node = mem_new (sizeof (struct cfg_node));
-    node->key = strdup (key);
-    node->value = strdup (value);
+    node->key = str_dup (key);
+    node->value = str_dup (value);
     node->next = 0;
 
     if (config->last) {
@@ -433,7 +461,7 @@ parse_key_value (struct config *config, char *line)
         
         char *value_start = str_first_not_of(key_end + 1, " =");
         if (value_start != 0) {
-            cfg_add_node(config, line, value_start);
+            cfg_add_node (config, line, value_start);
         }
     }
 }

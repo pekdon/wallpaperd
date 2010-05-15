@@ -20,8 +20,8 @@
  * Single node used internally in the configuration struct.
  */
 struct cfg_node {
-    const char *key;
-    const char *value;
+    char *key;
+    char *value;
 
     struct cfg_node *next;
 };

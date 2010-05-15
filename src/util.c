@@ -69,7 +69,7 @@ expand_home (const char *str)
         }
         return expanded_str;
     } else {
-        return strdup (str);
+        return str_dup (str);
     }
 }
 

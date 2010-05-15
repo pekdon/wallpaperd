@@ -527,7 +527,7 @@ char*
 find_wallpaper (const char *name)
 {
     if (name[0] == '/') {
-        return strdup (name);
+        return str_dup (name);
     }
 
     char **search_path = cfg_get_search_path (CONFIG);

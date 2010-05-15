@@ -35,7 +35,7 @@ background_xml_parse (FILE *fp)
 {
     char tag[TAG_VALUE_SIZE], value[TAG_VALUE_SIZE], file[TAG_VALUE_SIZE];
     char from[TAG_VALUE_SIZE], to[TAG_VALUE_SIZE];
-    unsigned int duration;
+    unsigned int duration = 0;
 
     struct background *bg = 0;
     struct background_set *bg_set = background_set_new ();
