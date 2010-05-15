@@ -35,6 +35,7 @@ struct background_set {
     unsigned int hour;
     unsigned int min;
     unsigned int sec;
+    unsigned int total;
 
     struct background *bg_curr;
     struct background *bg_first;
@@ -53,6 +54,6 @@ extern void background_set_add_transition (struct background_set *bg_set,
                                            const char *from, const char *to,
                                            unsigned int duration);
 
-extern void background_set_calculate_elapsed (struct background_set *bg_set);
+extern void background_set_update (struct background_set *bg_set);
 
 #endif /* _BACKGROUND_H_ */

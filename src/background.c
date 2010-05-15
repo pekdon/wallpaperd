@@ -54,7 +54,7 @@ background_set_free (struct background_set *bg_set)
 struct background*
 background_set_get_now (struct background_set *bg_set)
 {
-    struct background *bg = 0;
+    struct background *bg = bg_set->bg_first;
 
     if (! bg_set->bg_first) {
         /* Nothing to do, no backgrounds. */
@@ -62,22 +62,27 @@ background_set_get_now (struct background_set *bg_set)
         bg = bg_set->bg_first;
     } else {
         int time_elapsed = time (0) - bg_set->time;
-        while (time_elapsed >= 0)  {
-            if (bg) {
-                bg = bg->next;
+        do {
+            time_elapsed -= bg->duration + bg->transition;
+            if (time_elapsed >= 0) {
+                if (bg->next) {
+                    bg = bg->next;
+                } else {
+                    /* All image durations have been subtracted, remove
+                       total time from start offset to avoid excessive
+                       looping. */
+                    bg = bg_set->bg_first;
+                    bg_set->time -= bg_set->total;
+                }
             }
-            if (! bg) {
-                /* How to handle end of the list, re-set the timer or
-                   just continue looping until reaching the end? */
-                bg = bg_set->bg_first;
-            }
-            time_elapsed -= bg->duration;
-        }
+        } while (time_elapsed >= 0);
     }
 
     /* Set duration to duration + transition until transitions are
        supported */
-    bg_set->duration = bg->duration + bg->transition;
+    if (bg) {
+        bg_set->duration = bg->duration + bg->transition;
+    }
     bg_set->bg_curr = bg;
 
     return bg_set->bg_curr;
@@ -140,8 +145,15 @@ background_set_add_transition (struct background_set *bg_set,
  * called after adding all images to a background set.
  */
 void
-background_set_calculate_elapsed (struct background_set *bg_set)
+background_set_update (struct background_set *bg_set)
 {
+    /* Count total time. */
+    struct background *it = bg_set->bg_first;
+    for (bg_set->total = 0; it; it = it->next) {
+        bg_set->total += it->duration + it->transition;
+    }
+
+    /* Update start time. */
     time_t t = time (0);
     struct tm *tm = localtime (&t);
 

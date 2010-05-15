@@ -90,7 +90,7 @@ background_xml_parse (FILE *fp)
         }
     }
 
-    background_set_calculate_elapsed (bg_set);
+    background_set_update (bg_set);
 
     return bg_set;
 }
