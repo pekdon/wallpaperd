@@ -32,6 +32,8 @@ static Imlib_Image render_fill (struct geometry *geometry, Imlib_Image image);
 static Imlib_Image render_zoom (struct geometry *geometry, Imlib_Image image);
 static Pixmap render_x11_pixmap (Imlib_Image image);
 
+static Imlib_Image render_new_black (unsigned int width, unsigned int height);
+
 /**
  * Set wallpaper from image path.
  */
@@ -96,29 +98,44 @@ wallpaper_set_x11 (struct cache_node *node)
 Imlib_Image
 render_image (Imlib_Image image, enum wallpaper_mode mode)
 {
-    Imlib_Image image_rendered;
+    struct geometry *disp = x11_get_geometry ();
+    Imlib_Image image_disp = render_new_black (disp->width, disp->height);
+    mem_free (disp);
 
-    struct geometry *geometry = x11_get_geometry ();
+    struct geometry **heads = x11_get_heads ();
+    for (int i = 0; heads[i]; i++) {
+        Imlib_Image image_head;
 
-    switch (mode) {
-    case TILED:
-        image_rendered = render_tiled (geometry, image);
-        break;
-    case FILL:
-        image_rendered = render_fill (geometry, image);
-        break;
-    case ZOOM:
-        image_rendered = render_zoom (geometry, image);
-        break;
-    case CENTERED:
-    default:
-        image_rendered = render_centered (geometry, image);
-        break;
+        switch (mode) {
+        case TILED:
+            image_head = render_tiled (heads[i], image);
+            break;
+        case FILL:
+            image_head = render_fill (heads[i], image);
+            break;
+        case ZOOM:
+            image_head = render_zoom (heads[i], image);
+            break;
+        case CENTERED:
+        default:
+            image_head = render_centered (heads[i], image);
+            break;
+        }
+       
+        imlib_context_set_image (image_disp);
+        imlib_blend_image_onto_image (
+            image_head, 0,
+            0, 0, heads[i]->width, heads[i]->height,
+            heads[i]->x, heads[i]->y, heads[i]->width, heads[i]->height);
+
+        imlib_context_set_image (image_head);
+        imlib_free_image ();
+
+        mem_free (heads[i]);
     }
+    mem_free (heads);
 
-    mem_free (geometry);
-
-    return image_rendered;
+    return image_disp;
 }
 
 /**
@@ -236,4 +253,19 @@ render_x11_pixmap (Imlib_Image image)
     imlib_render_pixmaps_for_whole_image (&pixmap, &mask);
     x11_set_background_pixmap (x11_get_root_window (), pixmap);
     return pixmap;
+}
+
+/**
+ * Create new image filled with black of width/height dimensions.
+ */
+Imlib_Image
+render_new_black (unsigned int width, unsigned int height)
+{
+    Imlib_Image image = imlib_create_image (width, height);
+
+    imlib_context_set_image (image);
+    imlib_context_set_color (0, 0, 0, 255);
+    imlib_image_fill_rectangle (0, 0, width, height);
+
+    return image;
 }

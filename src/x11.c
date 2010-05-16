@@ -6,7 +6,12 @@
  * See the LICENSE file for more information.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
+
 #include <sys/select.h>
+#include <stdio.h>
 #include <string.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
@@ -35,6 +40,8 @@ static void x11_set_geometry_size(struct geometry *geometry, int x, int y,
 static Bool x11_get_atom_value (Window window, Atom atom, Atom type,
                                 unsigned long expected, unsigned char **data,
                                 unsigned long *actual);
+
+static struct geometry **x11_get_fake_heads (void);
 
 /**
  * Open a connection to the X11 display if not already open.
@@ -151,6 +158,56 @@ x11_get_geometry (void)
                            WidthOfScreen(screen), HeightOfScreen(screen));
 
     return geometry;
+}
+
+/**
+ * Get null terminated list of heads, all elements AND the list needs
+ * to be freed by the caller.
+ */
+struct geometry**
+x11_get_heads (void)
+{
+#ifdef HAVE_XRANDR
+    XRRScreenResources *res = XRRGetScreenResources (DISPLAY,
+                                                     x11_get_root_window ());
+    if (! res) {
+        fprintf (stderr, "unable to read xrandr screen information.");
+        return x11_get_fake_heads ();
+    }
+
+    unsigned int num = 0;
+    for (int i = 0; i < res->noutput; i++) {
+        XRROutputInfo *output = XRRGetOutputInfo(DISPLAY, res, res->outputs[i]);
+        if (output->crtc) {
+            num++;
+            
+        }
+        XRRFreeOutputInfo (output);
+    }
+
+    unsigned int head = 0;
+    struct geometry **heads = mem_new (sizeof (struct geometry*) * (num + 1));
+
+    for (int i = 0; i < res->noutput; ++i) {
+        XRROutputInfo *output = XRRGetOutputInfo(DISPLAY, res, res->outputs[i]);
+        if (output->crtc) {
+            XRRCrtcInfo *crtc = XRRGetCrtcInfo(DISPLAY, res, output->crtc);
+            heads[head] = mem_new (sizeof (struct geometry));
+            x11_set_geometry_size (heads[head++],
+                                   crtc->x, crtc->y, crtc->width, crtc->height);
+            XRRFreeCrtcInfo (crtc);
+        }
+        XRRFreeOutputInfo (output);
+    }
+
+    heads[num] = 0;
+
+    XRRFreeScreenResources (res);
+
+    return heads;
+#else /* ! HAVE_XRANDR */
+    return x11_get_fake_heads ();
+#endif /* HAVE_XRANDR */
 }
 
 /**
@@ -345,4 +402,17 @@ x11_set_atom_value_long (Window window, Atom atom, long format, long value)
 {
     XChangeProperty (DISPLAY, window, atom, format, 32,
                      PropModeReplace, (unsigned char*) &value, 1);
+}
+
+/**
+ * Get head information filled in from X11 screen information, used as
+ * fallback if XRANDR is missing or fails.
+ */
+struct geometry**
+x11_get_fake_heads (void)
+{
+    struct geometry **heads = mem_new (sizeof (struct geometry*) * 2);
+    heads[0] = x11_get_geometry ();
+    heads[1] = 0;
+    return heads;
 }

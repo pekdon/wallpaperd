@@ -6,6 +6,10 @@
  * See the LICENSE file for more information.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
+
 #include <stdio.h>
 #include <time.h>
 

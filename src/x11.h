@@ -41,6 +41,7 @@ extern Display *x11_get_display (void);
 extern Visual *x11_get_visual (void);
 extern Colormap x11_get_colormap (void);
 extern struct geometry *x11_get_geometry (void);
+extern struct geometry **x11_get_heads (void);
 
 extern void x11_set_background_pixmap (Window window, Pixmap pixmap);
 

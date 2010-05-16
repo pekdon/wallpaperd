@@ -6,9 +6,6 @@
  * See the LICENSE file for more information.
  */
 
-#ifndef _COMPAT_H_
-#define _COMPAT_H_
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
@@ -55,5 +52,3 @@ daemon (int nochdir, int noclose)
     return 0;
 }
 #endif /* HAVE_DAEMON */
-
-#endif /* _COMPAT_H_ */
