@@ -22,6 +22,8 @@
 #include "x11.h"
 
 static struct cache *CACHE = 0;
+static char CACHE_PATH[4096] = { '\0' };
+static enum wallpaper_mode CACHE_MODE = NUMBER;
 
 static void wallpaper_set_x11 (struct cache_node *node);
 
@@ -42,6 +44,8 @@ wallpaper_set (const char *path, enum wallpaper_mode mode)
 {
     if (! CACHE) {
         wallpaper_cache_clear (1);
+    } else if (strcmp (CACHE_PATH, path) == 0 && CACHE_MODE == mode) {
+        return;
     }
 
     struct cache_node *node = cache_get_pixmap (CACHE, path, mode);
@@ -60,6 +64,9 @@ wallpaper_set (const char *path, enum wallpaper_mode mode)
         node = cache_set_pixmap (CACHE, path, mode, pixmap);
     }
     wallpaper_set_x11 (node);
+
+    strncpy (CACHE_PATH, path, strlen (path));
+    CACHE_MODE = mode;
 }
 
 /**
@@ -74,6 +81,8 @@ wallpaper_cache_clear (int do_alloc)
     if (do_alloc) {
         CACHE = cache_new ();
     }
+    CACHE_PATH[0] = '\0';
+    CACHE_MODE = NUMBER;
 }
 
 /**
