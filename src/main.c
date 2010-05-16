@@ -24,6 +24,9 @@
 #include <errno.h>
 
 #include <X11/Xlib.h>
+#ifdef HAVE_XRANDR
+#include <X11/extensions/Xrandr.h>
+#endif /* HAVE_XRANDR */
 
 #include "cfg.h"
 #include "compat.h"
@@ -52,7 +55,7 @@ static void main_loop_set_interval (time_t *next_interval);
 static void main_loop_check_change_interval (time_t *next_interval);
 static int get_next_event_wait (time_t next_interval);
 static void handle_property_event (XEvent *ev);
-static void handle_xrandr_event (XEvent *ev);
+static void handle_xrandr_event (XEvent *ev, int ev_xrandr);
 
 static void set_wallpaper_for_current_desktop (void);
 static void set_wallpaper_name (long desktop);
@@ -334,7 +337,7 @@ main_loop (void)
     main_loop_set_interval (&next_interval);
 
     XEvent ev;
-    int ev_status;
+    int ev_status, ev_xrandr;
     while (! do_shutdown_flag) {        
         ev_status = x11_next_event (&ev, get_next_event_wait (next_interval));
 
@@ -351,8 +354,8 @@ main_loop (void)
         if (ev_status) {
             if (ev.type == PropertyNotify) {
                 handle_property_event (&ev);
-            } else if (ev.type == x11_get_xrandr_event ()) {
-                handle_xrandr_event (&ev);
+            } else if ((ev_xrandr = x11_is_xrandr_event (&ev)) != 0) {
+                handle_xrandr_event (&ev, ev_xrandr);
             }
         }
     }
@@ -426,9 +429,15 @@ handle_property_event (XEvent *ev)
  * background image.
  */
 void
-handle_xrandr_event (XEvent *ev)
+handle_xrandr_event (XEvent *ev, int ev_xrandr)
 {
-    wallpaper_cache_clear (1);
+    switch (ev_xrandr) {
+    case RRScreenChangeNotify:
+        XRRUpdateConfiguration (ev);
+        break;
+    };
+
+    wallpaper_cache_clear (0);
     set_wallpaper_for_current_desktop ();
 }
 

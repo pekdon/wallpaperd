@@ -47,7 +47,7 @@ extern void x11_set_background_pixmap (Window window, Pixmap pixmap);
 
 extern void x11_init_event_listeners (void);
 extern int x11_next_event (XEvent *ev, int timeout);
-extern int x11_get_xrandr_event (void);
+extern int x11_is_xrandr_event (XEvent *ev);
 extern const char *x11_get_desktop_name (int desktop);
 extern char **x11_get_desktop_names (int do_refresh);
 extern Atom x11_get_atom (const char *atom_name);

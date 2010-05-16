@@ -25,8 +25,8 @@
 #include "cache.h"
 
 static Display *DISPLAY = 0;
-static int XRANDR_EVENT = 0;
-static int XRANDR_ERROR_EVENT = 0;
+static int XRANDR_EVENT_BASE = 0;
+static int XRANDR_ERROR_EVENT_BASE = 0;
 static char **DESKTOP_NAMES = 0;
 
 Atom ATOM_DESKTOP = 0;
@@ -58,7 +58,7 @@ x11_open_display (void)
     x11_get_desktop_names (1);
 
 #ifdef HAVE_XRANDR
-    XRRQueryExtension (DISPLAY, &XRANDR_EVENT, &XRANDR_ERROR_EVENT);
+    XRRQueryExtension (DISPLAY, &XRANDR_EVENT_BASE, &XRANDR_ERROR_EVENT_BASE);
 #endif /* HAVE_XRANDR */
     return 1;
 }
@@ -227,9 +227,19 @@ x11_set_geometry_size(struct geometry *geometry, int x, int y,
  * Return XRANDR event.
  */
 int
-x11_get_xrandr_event (void)
+x11_is_xrandr_event (XEvent *ev)
 {
-    return XRANDR_EVENT;
+#ifdef HAVE_XRANDR
+    switch (ev->type - XRANDR_EVENT_BASE) {
+    case RRScreenChangeNotify:
+        return RRScreenChangeNotify;
+        break;
+    default:
+        return 0;
+    }
+#else /* ! HAVE_XRANDR */
+    return 0;
+#endif /* HAVE_XRANDR */
 }
 
 const char*
