@@ -231,9 +231,10 @@ x11_is_xrandr_event (XEvent *ev)
 {
 #ifdef HAVE_XRANDR
     switch (ev->type - XRANDR_EVENT_BASE) {
+    case RRNotify:
+        return RRNotify;
     case RRScreenChangeNotify:
         return RRScreenChangeNotify;
-        break;
     default:
         return 0;
     }
@@ -305,7 +306,13 @@ x11_set_background_pixmap (Window window, Pixmap pixmap)
 void
 x11_init_event_listeners (void)
 {
-    XSelectInput (DISPLAY, x11_get_root_window (), PropertyChangeMask);
+    XSelectInput (DISPLAY, x11_get_root_window (),
+                  PropertyChangeMask|
+                  StructureNotifyMask|SubstructureNotifyMask);
+#ifdef HAVE_XRANDR
+    XRRSelectInput (DISPLAY, x11_get_root_window (),
+                    RRCrtcChangeNotifyMask|RRScreenChangeNotifyMask);
+#endif // HAVE_XRANDR
 }
 
 /**

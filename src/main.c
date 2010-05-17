@@ -354,6 +354,9 @@ main_loop (void)
         if (ev_status) {
             if (ev.type == PropertyNotify) {
                 handle_property_event (&ev);
+            } else if (ev.type == ConfigureNotify
+                       && ev.xconfigurerequest.window == x11_get_root_window ()) {
+                handle_xrandr_event (&ev, ConfigureNotify);
             } else if ((ev_xrandr = x11_is_xrandr_event (&ev)) != 0) {
                 handle_xrandr_event (&ev, ev_xrandr);
             }
@@ -431,11 +434,19 @@ handle_property_event (XEvent *ev)
 void
 handle_xrandr_event (XEvent *ev, int ev_xrandr)
 {
-    switch (ev_xrandr) {
-    case RRScreenChangeNotify:
+#ifdef HAVE_XRANDR
+    if (ev_xrandr == RRNotify) {
+        XRRNotifyEvent *ev_notify = (XRRNotifyEvent*) ev;
+        if (ev_notify->subtype == RRNotify_OutputChange) {
+        } else if (ev_notify->subtype == RRNotify_CrtcChange) {
+        } else if (ev_notify->subtype == RRNotify_OutputProperty) {
+        }
+    } else if (ev_xrandr == RRScreenChangeNotify) {
         XRRUpdateConfiguration (ev);
-        break;
-    };
+    } else if (ev_xrandr == ConfigureNotify) {
+        XRRUpdateConfiguration (ev);
+    }
+#endif /* HAVE_XRANDR */
 
     wallpaper_cache_clear (0);
     set_wallpaper_for_current_desktop ();

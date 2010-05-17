@@ -77,6 +77,7 @@ wallpaper_cache_clear (int do_alloc)
 {
     if (CACHE != 0) {
         cache_free (CACHE);
+        CACHE = 0;
     }
     if (do_alloc) {
         CACHE = cache_new ();
