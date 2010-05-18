@@ -1,3 +1,23 @@
+2010-05-18  Claes Nästén  <me@pekdon.net>
+
+	* src/background.c (background_set_get_now): Improve accuracy of
+	background set timing.
+
+2010-05-16  Claes Nästén  <me@pekdon.net>
+
+	* src/x11.c (x11_is_xrandr_event): Proper detection of RANDR
+	events re-setting the background image.
+
+2010-05-15  Claes Nästén  <me@pekdon.net>
+
+	* src/cfg.c (cfg_load): Plug memory leak during configuration
+	re-load.
+	* src/wallpaper.c (render_image): Repeat the wallpaper drawing for
+	each available head.
+	* src/background_xml.c (background_xml_parse): Support parsing
+	GNOME background.xml files for providing list of background
+	images.
+
 2010-02-12  Claes Nästén  <me@pekdon.net>
 
 	* main.c (sighandler_hup_int_usr1): Added handler for USR1 causing the

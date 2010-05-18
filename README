@@ -7,11 +7,14 @@ have different wallpapers on the different workspaces in pekwm.
 wallpaperd now supports:
 
 * Changing wallpaper on workspace change.
-* Support for specifying centered, zoomed, tiled and fill image modes.
-* Setting background Atom hint.
-* Selecting wallpaper based on workspace name.
 * Changing wallpaper every X amount of time.
+* Changing wallpaper based on a GNOME background.xml file.
+* Support for specifying centered, zoomed, tiled and fill image modes.
+* Selecting wallpaper based on workspace number.
+* Selecting wallpaper based on workspace name.
+* RANDR support setting the wallpaper on each screen.
 * RANDR support re-setting the wallpaper on screen resolution changes.
+* Setting background Atom hint.
 
 plans for implementing support for:
 
@@ -21,7 +24,7 @@ plans for implementing support for:
 
 wallpaperd is known to compile and run on the following platforms:
 
-* Ubuntu 9.10
+* Ubuntu 10.04
 * OpenBSD 4.6
 * OS X 10.6
 * OpenSolaris 2009.06, both with GCC and Sun Studio compiler. Requires
@@ -37,9 +40,9 @@ wallpaperd requires:
 
 To install (download, extract, configure, compile and install) execute:
 
- $ wget http://pekdon.net/uploads/2010/02/wallpaperd-0.1.6.tar.gz
- $ tar xvzf wallpaperd-0.1.6.tar.gz
- $ cd wallpaperd-0.1.6
+ $ wget https://projects.pekdon.net/projects/wallpaperd/files/wallpaperd-0.2.0.tar.gz
+ $ tar xvzf wallpaperd-0.2.0.tar.gz
+ $ cd wallpaperd-0.2.0
  $ ./configure
  $ make
  $ sudo make install
@@ -49,14 +52,15 @@ To install (download, extract, configure, compile and install) execute:
 wallpaperd is configured in ~/.wallpaperd.cfg which is a simple
 section free ini style configuration file.
 
-An example configuration file setting the special wallpaper 1600.jpg
-on desktop 4 and Good_Vibrations-1680x1050.jpg on the others could
-look something like:
+An example configuration file setting the wallpaper based on workspace
+name, having special wallpapers for work and www workspaces and a default
+image named default.jpg:
 
- path.search=~/Pictures:~/Pictures/Wallpapers
- config.mode=NUMBER
- config.interval=3600
- wallpaper.default.image=Good_Vibrations-1680x1050.jpg
+ path.search=~/Pictures:~/Pictures/Wallpapers:/usr/share/backgrounds
+ config.mode=NAME
+ wallpaper.default.image=default.jpg
  wallpaper.default.mode=CENTERED
- wallpaper.4.image=1600.jpg
- wallpaper.4.mode=CENTERED
+ wallpaper.work.image=work.jpg
+ wallpaper.work.mode=ZOOMED
+ wallpaper.www.image=www.jpg
+ wallpaper.www.mode=TILED
