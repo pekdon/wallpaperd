@@ -333,7 +333,7 @@ clean_pid_file (void)
 void
 main_loop (void)
 {
-    time_t next_interval = 0;
+    time_t next_interval = time (0);
     main_loop_set_interval (&next_interval);
 
     XEvent ev;
@@ -386,7 +386,7 @@ main_loop_set_interval (time_t *next_interval)
     if (CONFIG->bg_select_mode == RANDOM) {
         *next_interval = time (0) + CONFIG->bg_interval;
     } else if (CONFIG->bg_select_mode == SET) {
-        *next_interval = time (0) + CONFIG->bg_set->duration;
+        *next_interval += CONFIG->bg_set->duration;
     }
 }
 

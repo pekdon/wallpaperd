@@ -60,6 +60,7 @@ background_set_get_now (struct background_set *bg_set)
 {
     struct background *bg = bg_set->bg_first;
 
+    int time_overlap = 0;
     if (! bg_set->bg_first) {
         /* Nothing to do, no backgrounds. */
     } else if (! bg_set->bg_first->next) {
@@ -76,16 +77,18 @@ background_set_get_now (struct background_set *bg_set)
                        total time from start offset to avoid excessive
                        looping. */
                     bg = bg_set->bg_first;
-                    bg_set->time -= bg_set->total;
+                    bg_set->time += bg_set->total;
                 }
             }
-        } while (time_elapsed >= 0);
+        } while (time_elapsed > 0);
+
+        time_overlap = bg->duration + bg->transition + time_elapsed;
     }
 
     /* Set duration to duration + transition until transitions are
        supported */
     if (bg) {
-        bg_set->duration = bg->duration + bg->transition;
+        bg_set->duration = bg->duration + bg->transition - time_overlap;
     }
     bg_set->bg_curr = bg;
 
