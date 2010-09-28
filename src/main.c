@@ -62,7 +62,9 @@ static void set_wallpaper_name (long desktop);
 static void set_wallpaper_number (long desktop);
 static void set_wallpaper_random (void);
 static void set_wallpaper_set (void);
-static void set_wallpaper_and_free (char *path, enum wallpaper_mode mode);
+static void set_wallpaper_and_free (char *spec,
+                                    enum wallpaper_type type,
+                                    enum wallpaper_mode mode);
 
 static char *find_wallpaper (const char *name);
 static char *find_wallpaper_by_name (const char *name);
@@ -484,15 +486,24 @@ void
 set_wallpaper_name (long desktop)
 {
     const char *name = x11_get_desktop_name (desktop - 1);
-    char *path = 0;
-    if (name) {
-        path = find_wallpaper_by_name (name);
+
+    enum wallpaper_type type = cfg_get_type (CONFIG, desktop);
+    enum wallpaper_mode mode = cfg_get_mode (CONFIG, desktop);
+
+    if (type == COLOR) {
+        const char *spec = cfg_get_color (CONFIG, -1);
+        wallpaper_set (spec, type, mode);
+    } else {
+        char *spec;
+        if (name) {
+            spec = find_wallpaper_by_name (name);
+        }
+        if (! spec) {
+            name = cfg_get_wallpaper (CONFIG, -1);
+            spec = find_wallpaper (name);
+        }
+        set_wallpaper_and_free (spec, type, mode);
     }
-    if (! path) {
-        name = cfg_get_wallpaper (CONFIG, -1);
-        path = find_wallpaper (name);
-    }
-    set_wallpaper_and_free (path, cfg_get_mode (CONFIG, desktop));
 }
 
 /**
@@ -501,9 +512,17 @@ set_wallpaper_name (long desktop)
 void
 set_wallpaper_number (long desktop)
 {
-    const char *name = cfg_get_wallpaper (CONFIG, desktop);
-    char *path = find_wallpaper (name);
-    set_wallpaper_and_free (path, cfg_get_mode (CONFIG, desktop));
+    enum wallpaper_type type = cfg_get_type (CONFIG, desktop);
+    enum wallpaper_mode mode = cfg_get_mode (CONFIG, desktop);
+
+    if (type == COLOR) {
+        const char *spec = cfg_get_color (CONFIG, desktop);
+        wallpaper_set (spec, type, mode);
+    } else {
+        const char *name = cfg_get_wallpaper (CONFIG, desktop);
+        char *spec = find_wallpaper (name);
+        set_wallpaper_and_free (spec, type, cfg_get_mode (CONFIG, desktop));
+    }
 }
 
 /**
@@ -513,7 +532,9 @@ void
 set_wallpaper_random (void)
 {
     char *path = find_wallpaper_random ();
-    set_wallpaper_and_free (path, cfg_get_mode (CONFIG, -1));
+    set_wallpaper_and_free (path,
+                            cfg_get_type (CONFIG, -1),
+                            cfg_get_mode (CONFIG, -1));
 }
 
 /**
@@ -524,7 +545,8 @@ set_wallpaper_set (void)
 {
     struct background *bg = background_set_get_now (CONFIG->bg_set);
     if (bg) {
-        wallpaper_set (bg->path, cfg_get_mode (CONFIG, -1));
+        wallpaper_set (bg->path,
+                       cfg_get_type (CONFIG, -1), cfg_get_mode (CONFIG, -1));
     }
 }
 
@@ -532,11 +554,12 @@ set_wallpaper_set (void)
  * If path != 0, set wallpaper and free path.
  */
 void
-set_wallpaper_and_free (char *path, enum wallpaper_mode mode)
+set_wallpaper_and_free (char *spec,
+                        enum wallpaper_type type, enum wallpaper_mode mode)
 {
-    if (path) {
-        wallpaper_set (path, mode);
-        mem_free (path);
+    if (spec) {
+        wallpaper_set (spec, type, mode);
+        mem_free (spec);
     }
 }
 

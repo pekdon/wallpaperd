@@ -291,6 +291,35 @@ x11_get_desktop_names (int do_refresh)
 }
 
 /**
+ * Parse color string and fill in color_ret with color values.
+ *
+ * Color can be in any format supported by XParseColor which includes
+ * #rrggbb, rgb:rr/gg/bb and color names such as white.
+ *
+ * @return true if color was parsed successfully, else false.
+ */
+bool
+x11_parse_color (const char *color_str, struct color *color_ret)
+{
+    bool parse_ok;
+
+    XColor color;
+    if (XParseColor (DISPLAY, x11_get_colormap (), color_str, &color)) {
+        parse_ok = true;
+        color_ret->r = color.red >> 8;
+        color_ret->g = color.green >> 8;
+        color_ret->b = color.blue >> 8;
+    } else {
+        parse_ok = false;
+        color_ret->r = 0;
+        color_ret->g = 0;
+        color_ret->b = 0;
+    }
+
+    return parse_ok;
+}
+
+/**
  * Set the background Pixmap of Window.
  */
 void

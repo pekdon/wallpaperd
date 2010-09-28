@@ -31,6 +31,7 @@ static long read_interval (struct config *config);
 static void read_bg_set (struct config *config);
 static int validate_config (struct config *config);
 
+static enum wallpaper_type cfg_get_type_from_str (const char *str);
 static enum wallpaper_mode cfg_get_mode_from_str (const char *str);
 
 static void parse_config (FILE *fp, struct config *config);
@@ -266,6 +267,27 @@ cfg_get (struct config *config, const char *key)
 }
 
 /**
+ * Get color configured for desktop.
+ */
+const char*
+cfg_get_color (struct config *config, long desktop)
+{
+    const char *color = 0;
+
+    char *color_key;
+    if (asprintf (&color_key, "wallpaper.%ld.color", desktop) != -1) {
+        color = cfg_get (config, color_key);
+        mem_free (color_key);
+    }
+
+    if (! color) {
+        color = cfg_get (config, "wallpaper.default.color");
+    }
+
+    return color;
+}
+
+/**
  * Get wallpaper configured for desktop.
  */
 const char*
@@ -289,6 +311,46 @@ cfg_get_wallpaper (struct config *config, long desktop)
 /**
  * Get wallpaper configured for desktop.
  */
+enum wallpaper_type
+cfg_get_type (struct config *config, long desktop)
+{
+    const char *type_str = 0;
+
+    char *type_key;
+    if (asprintf (&type_key, "wallpaper.%ld.type", desktop) != -1) {
+        type_str = cfg_get (config, type_key);
+        mem_free (type_key);
+    }
+
+    if (! type_str) {
+        type_str = cfg_get (config, "wallpaper.default.type");
+    }
+
+    return cfg_get_type_from_str (type_str);
+}
+
+/**
+ * Return wallpaper type from string, defaults to IMAGE if parsing
+ * fails.
+ */
+enum wallpaper_type
+cfg_get_type_from_str (const char *str)
+{
+    enum wallpaper_type type = IMAGE;
+
+    if (! str) {
+    } else if (! strcasecmp (str, "IMAGE")) {
+        type = IMAGE;
+    } else if (! strcasecmp (str, "COLOR")) {
+        type = COLOR;
+    }
+
+    return type;
+}
+
+/**
+ * Get wallpaper configured for desktop.
+ */
 enum wallpaper_mode
 cfg_get_mode (struct config *config, long desktop)
 {
@@ -306,7 +368,6 @@ cfg_get_mode (struct config *config, long desktop)
 
     return cfg_get_mode_from_str (mode_str);
 }
-
 
 /**
  * Return wallpaper mode from string, defaults to CENTERED if parsing

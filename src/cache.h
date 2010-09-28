@@ -21,7 +21,8 @@
  * Single node in the cache structure.
  */
 struct cache_node {
-    char *path;
+    char *spec;
+    enum wallpaper_type type;
     enum wallpaper_mode mode;
     Pixmap pixmap;
 
@@ -41,10 +42,12 @@ extern struct cache *cache_new (void);
 extern void cache_free (struct cache *cache);
 
 extern struct cache_node *cache_get_pixmap (struct cache *cache,
-                                            const char *path,
+                                            const char *spec,
+                                            enum wallpaper_type type,
                                             enum wallpaper_mode mode);
 extern struct cache_node *cache_set_pixmap (struct cache *cache,
-                                            const char *path,
+                                            const char *spec,
+                                            enum wallpaper_type type,
                                             enum wallpaper_mode mode,
                                             Pixmap pixmap);
 

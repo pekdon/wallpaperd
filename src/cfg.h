@@ -50,7 +50,9 @@ extern char *cfg_get_path (void);
 
 extern const char *cfg_get (struct config *config, const char *key);
 extern char **cfg_get_search_path (struct config *config);
+extern const char *cfg_get_color (struct config *config, long desktop);
 extern const char *cfg_get_wallpaper (struct config *config, long desktop);
+extern enum wallpaper_type cfg_get_type (struct config *config, long desktop);
 extern enum wallpaper_mode cfg_get_mode (struct config *config, long desktop);
 
 #endif /* _CFG_H_ */

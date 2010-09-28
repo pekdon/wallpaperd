@@ -22,11 +22,13 @@
 #include "x11.h"
 
 static struct cache *CACHE = 0;
-static char CACHE_PATH[4096] = { '\0' };
+static char CACHE_SPEC[4096] = { '\0' };
+static enum wallpaper_type CACHE_TYPE = IMAGE;
 static enum wallpaper_mode CACHE_MODE = NUMBER;
 
 static void wallpaper_set_x11 (struct cache_node *node);
 
+static Imlib_Image render_color (const char *color_str);
 static Imlib_Image render_image (Imlib_Image image, enum wallpaper_mode mode);
 static Imlib_Image render_centered (struct geometry *geometry, Imlib_Image image);
 static Imlib_Image render_tiled (struct geometry *geometry, Imlib_Image image);
@@ -34,38 +36,48 @@ static Imlib_Image render_fill (struct geometry *geometry, Imlib_Image image);
 static Imlib_Image render_zoom (struct geometry *geometry, Imlib_Image image);
 static Pixmap render_x11_pixmap (Imlib_Image image);
 
-static Imlib_Image render_new_black (unsigned int width, unsigned int height);
-
+static Imlib_Image render_new_color (unsigned int width, unsigned int height,
+                                     struct color *color);
 /**
  * Set wallpaper from image path.
  */
 void
-wallpaper_set (const char *path, enum wallpaper_mode mode)
+wallpaper_set (const char *spec,
+               enum wallpaper_type type, enum wallpaper_mode mode)
 {
     if (! CACHE) {
         wallpaper_cache_clear (1);
-    } else if (strcmp (CACHE_PATH, path) == 0 && CACHE_MODE == mode) {
+    } else if (CACHE_TYPE == type && CACHE_MODE == mode
+               && strcmp (CACHE_SPEC, spec) == 0) {
         return;
     }
 
-    struct cache_node *node = cache_get_pixmap (CACHE, path, mode);
+    struct cache_node *node = cache_get_pixmap (CACHE, spec, type, mode);
     if (! node) {
-        Imlib_Image image = imlib_load_image (path);
-        if (! image) {
-            fprintf (stderr, "failed to set background from %s\n", path);
-            return;
+        Imlib_Image image_rendered;
+        if (type == IMAGE) {
+            Imlib_Image image = imlib_load_image (spec);
+            if (! image) {
+                fprintf (stderr, "failed to set background from %s\n", spec);
+                return;
+            }
+            image_rendered = render_image (image, mode);
+
+            imlib_context_set_image (image);
+            imlib_free_image ();
+        } else {
+            image_rendered = render_color (spec);
         }
-        Imlib_Image image_rendered = render_image (image, mode);
+
         Pixmap pixmap = render_x11_pixmap (image_rendered);
-        imlib_context_set_image (image);
-        imlib_free_image ();
         imlib_context_set_image (image_rendered);
         imlib_free_image ();
-        node = cache_set_pixmap (CACHE, path, mode, pixmap);
+        node = cache_set_pixmap (CACHE, spec, type, mode, pixmap);
     }
     wallpaper_set_x11 (node);
 
-    strncpy (CACHE_PATH, path, strlen (path));
+    strncpy (CACHE_SPEC, spec, strlen (spec));
+    CACHE_TYPE = type;
     CACHE_MODE = mode;
 }
 
@@ -82,7 +94,8 @@ wallpaper_cache_clear (int do_alloc)
     if (do_alloc) {
         CACHE = cache_new ();
     }
-    CACHE_PATH[0] = '\0';
+    CACHE_SPEC[0] = '\0';
+    CACHE_TYPE = IMAGE;
     CACHE_MODE = NUMBER;
 }
 
@@ -103,13 +116,30 @@ wallpaper_set_x11 (struct cache_node *node)
 }
 
 /**
+ * Render image for current screen using a single color.
+ */
+Imlib_Image
+render_color (const char *color_str)
+{
+    struct color color;
+    x11_parse_color (color_str, &color);
+
+    struct geometry *disp = x11_get_geometry ();
+    Imlib_Image image = render_new_color (disp->width, disp->height, &color);
+    mem_free (disp);
+
+    return image;
+}
+
+/**
  * Render image for current screen with specified mode.
  */
 Imlib_Image
 render_image (Imlib_Image image, enum wallpaper_mode mode)
 {
     struct geometry *disp = x11_get_geometry ();
-    Imlib_Image image_disp = render_new_black (disp->width, disp->height);
+    struct color black = { 0, 0, 0 };
+    Imlib_Image image_disp = render_new_color (disp->width, disp->height, &black);
     mem_free (disp);
 
     struct geometry **heads = x11_get_heads ();
@@ -269,12 +299,12 @@ render_x11_pixmap (Imlib_Image image)
  * Create new image filled with black of width/height dimensions.
  */
 Imlib_Image
-render_new_black (unsigned int width, unsigned int height)
+render_new_color (unsigned int width, unsigned int height, struct color *color)
 {
     Imlib_Image image = imlib_create_image (width, height);
 
     imlib_context_set_image (image);
-    imlib_context_set_color (0, 0, 0, 255);
+    imlib_context_set_color (color->r, color->g, color->b, 255);
     imlib_image_fill_rectangle (0, 0, width, height);
 
     return image;

@@ -15,7 +15,8 @@
 
 #include "wallpaperd.h"
 
-extern void wallpaper_set (const char *path, enum wallpaper_mode mode);
+extern void wallpaper_set (const char *spec,
+                           enum wallpaper_type type, enum wallpaper_mode mode);
 extern void wallpaper_cache_clear (int do_alloc);
 
 #endif /* _WALLPAPER_H_ */

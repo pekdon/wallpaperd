@@ -24,6 +24,14 @@ enum bg_select_mode {
 };
 
 /**
+ * Supported background types.
+ */
+enum wallpaper_type {
+    COLOR,
+    IMAGE
+};
+
+/**
  * Supported background modes.
  */
 enum wallpaper_mode {

@@ -14,6 +14,7 @@
 #endif /* HAVE_CONFIG_H */
 
 #include <X11/Xlib.h>
+#include <stdbool.h>
 
 /**
  * Geometry specification (list).
@@ -25,6 +26,15 @@ struct geometry {
     int height;
 
     struct geometry *next;
+};
+
+/**
+ * Single RGB color specification.
+ */
+struct color {
+    char r;
+    char g;
+    char b;
 };
 
 extern Atom ATOM_DESKTOP;
@@ -42,6 +52,8 @@ extern Visual *x11_get_visual (void);
 extern Colormap x11_get_colormap (void);
 extern struct geometry *x11_get_geometry (void);
 extern struct geometry **x11_get_heads (void);
+
+extern bool x11_parse_color (const char *color_str, struct color *color_ret);
 
 extern void x11_set_background_pixmap (Window window, Pixmap pixmap);
 
