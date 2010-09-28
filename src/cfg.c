@@ -445,7 +445,18 @@ count_and_add_search_paths (struct config *config,
 char*
 cfg_get_path (void)
 {
-    return expand_home ("~/.wallpaperd.cfg");
+    char *path;
+
+    path = expand_home ("~/.wallpaperd.cfg");
+    if (! file_exists (path)) {
+        char *path_alt = expand_home("~/.config/wallpaperd/wallpaperd.cfg");
+        if (file_exists (path_alt)) {
+            mem_free (path);
+            path = path_alt;
+        }
+    }
+
+    return path;
 }
 
 /**

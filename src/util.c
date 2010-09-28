@@ -12,6 +12,7 @@
 
 #define _GNU_SOURCE
 
+#include <sys/stat.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,6 +58,17 @@ mem_free (void *data)
     if (data != 0) {
         free (data);
     }
+}
+
+/**
+ * Check if path exists.
+ */
+bool
+file_exists (const char *path)
+{
+    struct stat st_buf;
+    int err = stat(path, &st_buf);
+    return err ? false : true;
 }
 
 /**

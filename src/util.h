@@ -14,11 +14,14 @@
 #endif /* HAVE_CONFIG_H */
 
 #include <string.h>
+#include <stdbool.h>
 
 extern void die (const char *msg, ...);
 
 extern void *mem_new (size_t size);
 extern void mem_free (void *data);
+
+extern bool file_exists (const char *path);
 
 extern char *expand_home (const char *str);
 
