@@ -78,9 +78,25 @@ char*
 expand_home (const char *str)
 {
     if (str[0] == '~') {
-        const char *home = getenv ("HOME");
+        size_t len;
         char *expanded_str;
-        if (asprintf(&expanded_str, "%s/%s", home, str + 1) == -1) {
+        const char *home = getenv ("HOME");
+        const char *sep = "/";
+
+        if (home == 0 || strlen(home) == 0) {
+            fprintf (stderr, "HOME environment variable not set, using current directory");
+            home = ".";
+        }
+
+        len = strlen(home);
+        if (home[len-1] == '/') {
+            sep = "";
+        }
+        if (str[1] == '/') {
+            str += 1;
+        }
+
+        if (asprintf (&expanded_str, "%s%s%s", home, sep, str + 1) == -1) {
             die ("failed to expand home directory in path %s", str);
         }
         return expanded_str;

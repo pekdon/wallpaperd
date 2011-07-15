@@ -54,6 +54,10 @@ x11_open_display (void)
     }
 
     DISPLAY = XOpenDisplay (0);
+    if (DISPLAY == 0) {
+        die ("failed to open display, shutting down!");
+    }
+
     x11_init_atoms ();
     x11_get_desktop_names (1);
 
