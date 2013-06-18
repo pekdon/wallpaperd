@@ -26,8 +26,8 @@ extern bool file_exists (const char *path);
 extern char *expand_home (const char *str);
 
 extern char *str_dup (const char *str);
-extern char *str_first_of (char *str, const char *of);
-extern char *str_first_not_of (char *str, const char *not_of);
+extern const char *str_first_of (const char *str, const char *of);
+extern const char *str_first_not_of (const char *str, const char *not_of);
 extern int str_starts_with (const char *str, const char *start);
 extern int str_ends_with (const char *str, const char *end);
 

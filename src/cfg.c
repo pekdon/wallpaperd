@@ -491,16 +491,14 @@ parse_config (FILE *fp, struct config *config)
     size_t buf_size = 4096;
     char *buf = mem_new (sizeof(char) * buf_size);
 
-    char *line;
+    char *line, *start;
     while ((line = parse_line (fp, buf, buf_size)) != 0) {
-        if (line[0] == '#') {
-            /* Filter out comment lines */
-            continue;
-        } else if (! str_first_not_of (line, " \t")) {
-            /* Filter out empty lines */
-        } else {
-            parse_key_value (config, line);
+        start = (char*) str_first_not_of (line, " \t");
 
+        if (! start || start[0] == '#') {
+            continue;
+        } else {
+            parse_key_value (config, start);
         }
     }
 
@@ -531,11 +529,11 @@ parse_line (FILE *fp, char *buf, size_t buf_size)
 void
 parse_key_value (struct config *config, char *line)
 {
-    char *key_end = str_first_of(line, " =");
+    char *key_end = (char*) str_first_of(line, " =");
     if (key_end != 0) {
         *key_end = '\0';
-        
-        char *value_start = str_first_not_of(key_end + 1, " =");
+
+        char *value_start = (char*) str_first_not_of(key_end + 1, " ");
         if (value_start != 0) {
             cfg_add_node (config, line, value_start);
         }

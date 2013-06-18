@@ -121,12 +121,12 @@ str_dup (const char *str_in)
 /**
  * Find first occurance of character in of.
  */
-char*
-str_first_of (char *str, const char *of)
+const char*
+str_first_of (const char *str, const char *of)
 {
-    char *p, *c;
+    const char *p, *c;
     for (p = str; *p != '\0'; p++) {
-        for (c = (char*) of; *c != '\0'; c++) {
+        for (c = of; *c != '\0'; c++) {
             if (*p == *c) {
                 return p;
             }
@@ -139,17 +139,23 @@ str_first_of (char *str, const char *of)
  * Return pointer to first position in string not being one of the
  * specified characters.
  */
-char*
-str_first_not_of (char *str, const char *not_of)
+const char*
+str_first_not_of (const char *str, const char *not_of)
 {
-    char *p, *c;
+    int found;
+    const char *p, *c;
     for (p = str; *p != '\0'; p++) {
-        for (c = (char*) not_of; *c != '\0'; c++) {
+        found = 0;
+        for (c = not_of; *c != '\0'; c++) {
             if (*p == *c) {
-                continue;
+                found = 1;
+                break;
             }
         }
-        return p;
+
+        if (! found) {
+            return p;
+        }
     }
     return 0;
 }
