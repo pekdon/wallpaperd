@@ -15,7 +15,7 @@ wallpaperd_SOURCES = \
 
 wallpaperd_LDADD = @xlib_LIBS@ @xrandr_LIBS@ @imlib2_LIBS@
 
-INCLUDES = @xlib_CFLAGS@ @xrandr_CFLAGS@ @imlib2_CFLAGS@
+AM_CPPFLAGS = @xlib_CFLAGS@ @xrandr_CFLAGS@ @imlib2_CFLAGS@
 
 distclean-local:
 	rm -f *\~ .\#*
