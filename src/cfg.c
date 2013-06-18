@@ -53,7 +53,7 @@ cfg_new (void)
     config->path = 0;
     config->pid_path = create_pid_path();
 
-    config->bg_select_mode = NUMBER;
+    config->bg_select_mode = MODE_NUMBER;
     config->bg_set = 0;
     config->bg_interval = 0;
     config->_search_path = 0;
@@ -156,7 +156,7 @@ read_config (struct config *config)
     config->bg_select_mode = read_bg_select_mode (config);
     config->bg_interval = read_interval (config);
 
-    if (config->bg_select_mode == SET) {
+    if (config->bg_select_mode == MODE_SET) {
         read_bg_set (config);
     }
 }
@@ -169,18 +169,22 @@ enum bg_select_mode
 read_bg_select_mode (struct config *config)
 {
     const char *mode_str = cfg_get (config, "config.mode");
-    enum bg_select_mode mode = NUMBER;
+    enum bg_select_mode mode;
 
     if (! mode_str || ! strcmp (mode_str, "NUMBER")) {
+        mode = MODE_NUMBER;
     } else if (! strcmp (mode_str, "NAME")) {
-        mode = NAME;
+        mode = MODE_NAME;
     } else if (! strcmp (mode_str, "RANDOM")) {
-        mode = RANDOM;
+        mode = MODE_RANDOM;
     } else if (! strcmp (mode_str, "SET")) {
-        mode = SET;
+        mode = MODE_SET;
+    } else if (! strcmp (mode_str, "STATIC")) {
+        mode = MODE_STATIC;
     } else {
         fprintf (stderr, "unknown selection mode %s, setting to NUMBER",
                  mode_str);
+        mode = MODE_NUMBER;
     }
 
     return mode;

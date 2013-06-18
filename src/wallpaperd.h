@@ -17,10 +17,11 @@
  * Background image selection mode
  */
 enum bg_select_mode {
-    NUMBER,
-    NAME,
-    RANDOM,
-    SET
+    MODE_NUMBER,
+    MODE_NAME,
+    MODE_RANDOM,
+    MODE_SET,
+    MODE_STATIC
 };
 
 /**

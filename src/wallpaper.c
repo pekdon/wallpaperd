@@ -24,7 +24,7 @@
 static struct cache *CACHE = 0;
 static char CACHE_SPEC[4096] = { '\0' };
 static enum wallpaper_type CACHE_TYPE = IMAGE;
-static enum wallpaper_mode CACHE_MODE = NUMBER;
+static enum wallpaper_mode CACHE_MODE = MODE_NUMBER;
 
 static void wallpaper_set_x11 (struct cache_node *node);
 
@@ -96,7 +96,7 @@ wallpaper_cache_clear (int do_alloc)
     }
     CACHE_SPEC[0] = '\0';
     CACHE_TYPE = IMAGE;
-    CACHE_MODE = NUMBER;
+    CACHE_MODE = MODE_NUMBER;
 }
 
 /**

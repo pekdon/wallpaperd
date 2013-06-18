@@ -36,8 +36,8 @@
 #include "x11.h"
 
 #define IS_CONFIG_TIMED_MODE() \
-    (CONFIG->bg_select_mode == SET \
-     || (CONFIG->bg_select_mode == RANDOM && CONFIG->bg_interval > 0))
+    (CONFIG->bg_select_mode == MODE_SET \
+     || (CONFIG->bg_select_mode == MODE_RANDOM && CONFIG->bg_interval > 0))
 
 static void parse_options (int argc, char **argv, struct options *options);
 static void usage (const char *name);
@@ -62,6 +62,7 @@ static void set_wallpaper_name (long desktop);
 static void set_wallpaper_number (long desktop);
 static void set_wallpaper_random (void);
 static void set_wallpaper_set (void);
+static void set_wallpaper_default (void);
 static void set_wallpaper_and_free (char *spec,
                                     enum wallpaper_type type,
                                     enum wallpaper_mode mode);
@@ -385,9 +386,9 @@ get_next_event_wait (time_t next_interval)
 void
 main_loop_set_interval (time_t *next_interval)
 {
-    if (CONFIG->bg_select_mode == RANDOM) {
+    if (CONFIG->bg_select_mode == MODE_RANDOM) {
         *next_interval = time (0) + CONFIG->bg_interval;
-    } else if (CONFIG->bg_select_mode == SET) {
+    } else if (CONFIG->bg_select_mode == MODE_SET) {
         *next_interval += CONFIG->bg_set->duration;
     }
 }
@@ -424,7 +425,7 @@ handle_property_event (XEvent *ev)
         do_update = 1;
     }
 
-    if (do_update && CONFIG->bg_select_mode != RANDOM) {
+    if (do_update && CONFIG->bg_select_mode != MODE_RANDOM && CONFIG->bg_select_mode != MODE_STATIC) {
         set_wallpaper_for_current_desktop ();
     }
 }
@@ -462,19 +463,21 @@ set_wallpaper_for_current_desktop (void)
 {
     long current_desktop = x11_get_atom_value_long (x11_get_root_window (),
                                                     ATOM_DESKTOP) + 1;
-
     switch (CONFIG->bg_select_mode) {
-    case NAME:
+    case MODE_NAME:
         set_wallpaper_name (current_desktop);
         break;
-    case NUMBER:
+    case MODE_NUMBER:
         set_wallpaper_number (current_desktop);
         break;
-    case RANDOM:
+    case MODE_RANDOM:
         set_wallpaper_random ();
         break;
-    case SET:
+    case MODE_SET:
         set_wallpaper_set ();
+        break;
+    case MODE_STATIC:
+        set_wallpaper_default ();
         break;
     }
 }
@@ -548,6 +551,15 @@ set_wallpaper_set (void)
         wallpaper_set (bg->path,
                        cfg_get_type (CONFIG, -1), cfg_get_mode (CONFIG, -1));
     }
+}
+
+/**
+ * Set wallpaper using the default configuration.
+ */
+static
+void set_wallpaper_default (void)
+{
+    set_wallpaper_number (-1);
 }
 
 /**
