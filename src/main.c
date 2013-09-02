@@ -497,7 +497,7 @@ set_wallpaper_name (long desktop)
         const char *spec = cfg_get_color (CONFIG, -1);
         wallpaper_set (spec, type, mode);
     } else {
-        char *spec;
+        char *spec = NULL;
         if (name) {
             spec = find_wallpaper_by_name (name);
         }
