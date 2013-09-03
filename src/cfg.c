@@ -38,6 +38,7 @@ static void parse_config (FILE *fp, struct config *config);
 static char *parse_line (FILE *fp, char *buf, size_t buf_size);
 static void parse_comment (struct config *config, char *line);
 static void parse_key_value (struct config *config, char *line);
+static void write_config (FILE *fp, struct config *config);
 
 static int count_and_add_search_paths(
         struct config *config, const char *search_path_opt, int count_only);
@@ -116,6 +117,23 @@ cfg_load (struct config *config, const char *path)
     }
 
     return status;
+}
+
+/**
+ * Save configuration to path.
+ */
+int
+cfg_save (struct config *config, const char *path)
+{
+    FILE *fp = fopen (path, "w");
+    if (fp == 0) {
+        return 1;
+    }
+
+    write_config (fp, config);
+    fclose(fp);
+
+    return 0;
 }
 
 /**
@@ -548,6 +566,22 @@ parse_key_value (struct config *config, char *line)
         char *value_start = (char*) str_first_not_of(key_end + 1, " ");
         if (value_start != 0) {
             cfg_add_node (config, line, value_start);
+        }
+    }
+}
+
+/**
+ * Write configuration to file.
+ */
+void
+write_config (FILE *fp, struct config *config)
+{
+    struct cfg_node *it = config->first;
+    for (; it != 0; it = it->next) {
+        if (it->key) {
+            fprintf(fp, "%s=%s\n", it->key, it->value);
+        } else {
+            fprintf(fp, "%s\n", it->value);
         }
     }
 }

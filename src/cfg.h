@@ -46,6 +46,7 @@ struct config {
 extern struct config *cfg_new (void);
 extern void cfg_free (struct config *config);
 extern int cfg_load (struct config *config, const char *path);
+extern int cfg_save (struct config *config, const char *path);
 extern char *cfg_get_path (void);
 
 extern const char *cfg_get (struct config *config, const char *key);
