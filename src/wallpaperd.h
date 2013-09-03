@@ -36,10 +36,11 @@ enum wallpaper_type {
  * Supported background modes.
  */
 enum wallpaper_mode {
-    CENTERED,
-    TILED,
-    FILL,
-    ZOOM
+    MODE_CENTERED,
+    MODE_TILED,
+    MODE_FILL,
+    MODE_ZOOM,
+    MODE_UNKNOWN
 };
 
 /**

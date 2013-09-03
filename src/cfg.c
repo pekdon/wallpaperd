@@ -32,9 +32,6 @@ static long read_interval (struct config *config);
 static void read_bg_set (struct config *config);
 static int validate_config (struct config *config);
 
-static enum wallpaper_type cfg_get_type_from_str (const char *str);
-static enum wallpaper_mode cfg_get_mode_from_str (const char *str);
-
 static void parse_config (FILE *fp, struct config *config);
 static char *parse_line (FILE *fp, char *buf, size_t buf_size);
 static void parse_comment (struct config *config, char *line);
@@ -415,23 +412,23 @@ cfg_get_mode (struct config *config, long desktop)
 }
 
 /**
- * Return wallpaper mode from string, defaults to CENTERED if parsing
+ * Return wallpaper mode from string, defaults to MODE_CENTERED if parsing
  * fails.
  */
 enum wallpaper_mode
 cfg_get_mode_from_str (const char *str)
 {
-    enum wallpaper_mode mode = CENTERED;
+    enum wallpaper_mode mode = MODE_CENTERED;
 
     if (! str) {
     } else if (! strcasecmp (str, "CENTERED")) {
-        mode = CENTERED;
+        mode = MODE_CENTERED;
     } else if (! strcasecmp (str, "TILED")) {
-        mode = TILED;
+        mode = MODE_TILED;
     } else if (! strcasecmp (str, "FILLED")) {
-        mode = FILL;
+        mode = MODE_FILL;
     } else if (! strcasecmp (str, "ZOOMED")) {
-        mode = ZOOM;
+        mode = MODE_ZOOM;
     }
 
     return mode;

@@ -24,7 +24,7 @@
 static struct cache *CACHE = 0;
 static char CACHE_SPEC[4096] = { '\0' };
 static enum wallpaper_type CACHE_TYPE = IMAGE;
-static enum wallpaper_mode CACHE_MODE = CENTERED;
+static enum wallpaper_mode CACHE_MODE = MODE_UNKNOWN;
 
 static void wallpaper_set_x11 (struct cache_node *node);
 
@@ -96,7 +96,7 @@ wallpaper_cache_clear (int do_alloc)
     }
     CACHE_SPEC[0] = '\0';
     CACHE_TYPE = IMAGE;
-    CACHE_MODE = CENTERED;
+    CACHE_MODE = MODE_UNKNOWN;
 }
 
 /**
@@ -147,16 +147,16 @@ render_image (Imlib_Image image, enum wallpaper_mode mode)
         Imlib_Image image_head;
 
         switch (mode) {
-        case TILED:
+        case MODE_TILED:
             image_head = render_tiled (heads[i], image);
             break;
-        case FILL:
+        case MODE_FILL:
             image_head = render_fill (heads[i], image);
             break;
-        case ZOOM:
+        case MODE_ZOOM:
             image_head = render_zoom (heads[i], image);
             break;
-        case CENTERED:
+        case MODE_CENTERED:
         default:
             image_head = render_centered (heads[i], image);
             break;
