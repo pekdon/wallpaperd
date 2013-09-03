@@ -36,6 +36,7 @@ static enum wallpaper_mode cfg_get_mode_from_str (const char *str);
 
 static void parse_config (FILE *fp, struct config *config);
 static char *parse_line (FILE *fp, char *buf, size_t buf_size);
+static void parse_comment (struct config *config, char *line);
 static void parse_key_value (struct config *config, char *line);
 
 static int count_and_add_search_paths(
@@ -139,7 +140,9 @@ cfg_unload (struct config *config)
     struct cfg_node *it, *it_next;
     for (it = config->first; it; it = it_next) {
         it_next = it->next;
-        mem_free (it->key);
+        if (it->key) {
+            mem_free (it->key);
+        }
         mem_free (it->value);
         mem_free (it);
     }
@@ -263,7 +266,7 @@ cfg_get (struct config *config, const char *key)
 {
     struct cfg_node *it = config->first;
     for (; it != 0; it = it->next) {
-        if (! strcmp (key, it->key)) {
+        if (it->key && ! strcmp (key, it->key)) {
             return it->value;
         }
     }
@@ -470,7 +473,7 @@ void
 cfg_add_node (struct config *config, const char *key, const char *value)
 {
     struct cfg_node *node = mem_new (sizeof (struct cfg_node));
-    node->key = str_dup (key);
+    node->key = key ? str_dup (key) : NULL;
     node->value = str_dup (value);
     node->next = 0;
 
@@ -496,7 +499,7 @@ parse_config (FILE *fp, struct config *config)
         start = (char*) str_first_not_of (line, " \t");
 
         if (! start || start[0] == '#') {
-            continue;
+            parse_comment (config, line);
         } else {
             parse_key_value (config, start);
         }
@@ -521,6 +524,15 @@ parse_line (FILE *fp, char *buf, size_t buf_size)
     buf[pos] = '\0';
 
     return c == EOF ? 0 : buf;
+}
+
+/**
+ * Parse comment line adding it to configuration.
+ */
+void
+parse_comment (struct config *config, char *line)
+{
+    cfg_add_node (config, NULL, line);
 }
 
 /**
