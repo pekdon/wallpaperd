@@ -23,8 +23,9 @@
 #include "util.h"
 
 static char *create_pid_path (void);
-
 static void cfg_unload (struct config *config);
+static void cfg_add_node (struct config *config,
+                          const char *key, const char *value);
 static void read_config (struct config *config);
 static enum bg_select_mode read_bg_select_mode (struct config *config);
 static long read_interval (struct config *config);
@@ -289,6 +290,25 @@ cfg_get (struct config *config, const char *key)
         }
     }
     return 0;
+}
+
+/**
+ * Set configuration option.
+ */
+void
+cfg_set (struct config *config, const char *key, const char *value)
+{
+    /* Try to update existing value if it exists. */
+    struct cfg_node *it = config->first;
+    for (; it != 0; it = it->next) {
+        if (it->key && ! strcmp (key, it->key)) {
+            mem_free (it->value);
+            it->value = str_dup (value);
+            return;
+        }
+    }
+
+    cfg_add_node (config, key, value);
 }
 
 /**

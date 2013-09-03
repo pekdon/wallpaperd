@@ -50,6 +50,7 @@ extern int cfg_save (struct config *config, const char *path);
 extern char *cfg_get_path (void);
 
 extern const char *cfg_get (struct config *config, const char *key);
+extern void cfg_set (struct config *config, const char *key, const char *value);
 extern char **cfg_get_search_path (struct config *config);
 extern const char *cfg_get_color (struct config *config, long desktop);
 extern const char *cfg_get_wallpaper (struct config *config, long desktop);
