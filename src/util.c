@@ -12,11 +12,13 @@
 
 #define _GNU_SOURCE
 
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "util.h"
 
@@ -69,6 +71,26 @@ file_exists (const char *path)
     struct stat st_buf;
     int err = stat(path, &st_buf);
     return err ? false : true;
+}
+
+/**
+ * Get absolute path.
+ */
+char*
+expand_abs (const char *path)
+{
+    if (path[0] == '/') {
+        return str_dup (path);
+    }
+
+    char cwd[MAXPATHLEN];
+    getcwd(cwd, MAXPATHLEN);
+
+    char *path_abs;
+    asprintf(&path_abs, "%s/%s",
+             cwd, str_starts_with (path, "./") ? path + 2 : path);
+
+    return path_abs;
 }
 
 /**

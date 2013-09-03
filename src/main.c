@@ -109,16 +109,28 @@ parse_options (int argc, char **argv, struct options *options)
     options->help = 0;
     options->foreground = 0;
     options->stop = 0;
+    options->image = NULL;
+    options->mode = MODE_UNKNOWN;
+    options->workspace = "default";
 
     int opt;
-    while ((opt = getopt (argc, argv, "hfs")) != -1) {
+    while ((opt = getopt (argc, argv, "fhi:m:sw:")) != -1) {
         switch (opt) {
 
         case 'f':
             options->foreground = 1;
             break;
+        case 'i':
+            options->image = expand_abs (optarg);
+            break;
+        case 'm':
+            options->mode = cfg_get_mode_from_str (optarg);
+            break;
         case 's':
             options->stop = 1;
+            break;
+        case 'w':
+            options->workspace = optarg;
             break;
         case 'h':
         case '?':
@@ -135,11 +147,15 @@ parse_options (int argc, char **argv, struct options *options)
 void
 usage (const char *name)
 {
-    fprintf (stderr, "usage: %s [-fsh]\n", name);
+    fprintf (stderr, "usage: %s [-fhimsw]\n", name);
     fprintf (stderr, "\n");
     fprintf (stderr, "  -f foreground    do not go into background\n");
     fprintf (stderr, "  -h help          print help information\n");
+    fprintf (stderr, "  -i image         set image for workspace\n");
+    fprintf (stderr, "  -m mode          set image mode for workspace\n");
     fprintf (stderr, "  -s stop          stop running daemon\n");
+    fprintf (stderr, "  -w workspace     workspace image applies on, defaults"
+             " to default\n");
     fprintf (stderr, "\n");
     exit (1);
 }
@@ -167,6 +183,9 @@ main (int argc, char **argv)
     }
 
     cfg_free (CONFIG);
+    if (OPTIONS->image) {
+        mem_free (OPTIONS->image);
+    }
 
     return 0;
 }
@@ -180,6 +199,24 @@ do_start (void)
     char *cfg_path = cfg_get_path ();
     if (! cfg_load (CONFIG, cfg_path)) {
         die ("failed to load configuration from %s, aborting!", cfg_path);
+    }
+
+    if (OPTIONS->image || OPTIONS->mode != MODE_UNKNOWN) {
+        if (OPTIONS->image) {
+            char *image_key;
+            asprintf(&image_key, "wallpaper.%s.image", OPTIONS->workspace);
+            cfg_set (CONFIG, image_key, OPTIONS->image);
+            mem_free (image_key);
+        }
+
+        if (OPTIONS->mode != MODE_UNKNOWN) {
+            char *mode_key;
+            asprintf(&mode_key, "wallpaper.%s.mode", OPTIONS->workspace);
+            cfg_set (CONFIG, mode_key, cfg_get_str_from_mode(OPTIONS->mode));
+            mem_free (mode_key);
+        }
+
+        cfg_save (CONFIG, cfg_path);
     }
 
     if (x11_open_display ()) {

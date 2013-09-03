@@ -412,6 +412,25 @@ cfg_get_mode (struct config *config, long desktop)
 }
 
 /**
+ * Returns string representation for mode.
+ */
+const char*
+cfg_get_str_from_mode (enum wallpaper_mode mode)
+{
+    switch (mode) {
+    case MODE_TILED:
+        return "TILED";
+    case MODE_FILL:
+        return "FILLED";
+    case MODE_ZOOM:
+        return "ZOOMED";
+    case MODE_CENTERED:
+    default:
+        return "CENTERED";
+    }
+}
+
+/**
  * Return wallpaper mode from string, defaults to MODE_CENTERED if parsing
  * fails.
  */

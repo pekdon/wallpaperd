@@ -23,6 +23,7 @@ extern void mem_free (void *data);
 
 extern bool file_exists (const char *path);
 
+extern char *expand_abs (const char *path);
 extern char *expand_home (const char *str);
 
 extern char *str_dup (const char *str);

@@ -58,6 +58,7 @@ extern enum wallpaper_type cfg_get_type (struct config *config, long desktop);
 extern enum wallpaper_mode cfg_get_mode (struct config *config, long desktop);
 
 extern enum wallpaper_type cfg_get_type_from_str (const char *str);
+extern const char *cfg_get_str_from_mode (enum wallpaper_mode mode);
 extern enum wallpaper_mode cfg_get_mode_from_str (const char *str);
 
 

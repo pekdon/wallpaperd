@@ -50,6 +50,9 @@ struct options {
     int help;
     int foreground;
     int stop;
+    char *image;
+    enum wallpaper_mode mode;
+    const char *workspace;
 };
 
 #include "cfg.h"
