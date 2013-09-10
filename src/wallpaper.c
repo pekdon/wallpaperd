@@ -34,6 +34,7 @@ static Imlib_Image render_centered (struct geometry *geometry, Imlib_Image image
 static Imlib_Image render_tiled (struct geometry *geometry, Imlib_Image image);
 static Imlib_Image render_fill (struct geometry *geometry, Imlib_Image image);
 static Imlib_Image render_zoom (struct geometry *geometry, Imlib_Image image);
+static Imlib_Image render_scaled (struct geometry *geometry, Imlib_Image image);
 static Pixmap render_x11_pixmap (Imlib_Image image);
 
 static Imlib_Image render_new_color (unsigned int width, unsigned int height,
@@ -156,12 +157,15 @@ render_image (Imlib_Image image, enum wallpaper_mode mode)
         case MODE_ZOOM:
             image_head = render_zoom (heads[i], image);
             break;
+        case MODE_SCALED:
+            image_head = render_scaled (heads[i], image);
+            break;
         case MODE_CENTERED:
         default:
             image_head = render_centered (heads[i], image);
             break;
         }
-       
+
         imlib_context_set_image (image_disp);
         imlib_blend_image_onto_image (
             image_head, 0,
@@ -209,6 +213,39 @@ render_zoom (struct geometry *geometry, Imlib_Image image)
 
     int d_width, d_height;
     if (s_aspect > d_aspect) {
+        d_width = geometry->height * (s_width / s_height);
+        d_height = geometry->height;
+    } else {
+        d_width = geometry->width;
+        d_height = geometry->width * (s_height / s_width);
+    }
+
+    Imlib_Image image_zoom = imlib_create_cropped_scaled_image (
+            0, 0, s_width, s_height, d_width, d_height);
+
+    Imlib_Image image_dest = render_centered (geometry, image_zoom);
+
+    imlib_context_set_image (image_zoom);
+    imlib_free_image ();
+
+    return image_dest;
+}
+
+/**
+ * Scale image on new image keeping aspect ratio.
+ */
+Imlib_Image
+render_scaled (struct geometry *geometry, Imlib_Image image)
+{
+    imlib_context_set_image (image);
+    float s_width = imlib_image_get_width ();
+    float s_height = imlib_image_get_height ();
+
+    float s_aspect = s_width / s_height;
+    float d_aspect = (float) geometry->width / geometry->height;
+
+    int d_width, d_height;
+    if (s_aspect < d_aspect) {
         d_width = geometry->height * (s_width / s_height);
         d_height = geometry->height;
     } else {

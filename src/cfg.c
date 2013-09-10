@@ -424,6 +424,8 @@ cfg_get_str_from_mode (enum wallpaper_mode mode)
         return "FILLED";
     case MODE_ZOOM:
         return "ZOOMED";
+    case MODE_SCALED:
+        return "SCALED";
     case MODE_CENTERED:
     default:
         return "CENTERED";
@@ -448,6 +450,8 @@ cfg_get_mode_from_str (const char *str)
         mode = MODE_FILL;
     } else if (! strcasecmp (str, "ZOOMED")) {
         mode = MODE_ZOOM;
+    } else if (! strcasecmp (str, "SCALED")) {
+        mode = MODE_SCALED;
     }
 
     return mode;

@@ -40,6 +40,7 @@ enum wallpaper_mode {
     MODE_TILED,
     MODE_FILL,
     MODE_ZOOM,
+    MODE_SCALED,
     MODE_UNKNOWN
 };
 
