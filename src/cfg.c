@@ -487,7 +487,7 @@ int
 count_and_add_search_paths (struct config *config,
                             const char *search_path_opt, int count_only)
 {
-    
+
     char *search_path_buf = str_dup (search_path_opt);
 
     int pos;

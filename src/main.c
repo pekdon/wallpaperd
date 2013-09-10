@@ -305,7 +305,7 @@ do_reload (void)
             cfg_free (CONFIG);
         }
         CONFIG = config;
-        
+
         set_wallpaper_for_current_desktop ();
     } else {
         fprintf (stderr, "reload of configuration from %s, keeping current.\n",
@@ -380,7 +380,7 @@ main_loop (void)
 
     XEvent ev;
     int ev_status, ev_xrandr;
-    while (! do_shutdown_flag) {        
+    while (! do_shutdown_flag) {
         ev_status = x11_next_event (&ev, get_next_event_wait (next_interval));
 
         if (do_reload_flag) {
@@ -711,7 +711,7 @@ count_and_select_image_in_search_path (int image_select, char **path_ret)
                               search_path[i], entry->d_name, path_ret);
             }
         }
- 
+
         closedir (dirp);
     }
 

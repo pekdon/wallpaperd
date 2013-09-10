@@ -191,7 +191,7 @@ render_fill (struct geometry *geometry, Imlib_Image image)
     imlib_context_set_image (image);
     int s_width = imlib_image_get_width ();
     int s_height = imlib_image_get_height ();
-    
+
     Imlib_Image image_dest = imlib_create_cropped_scaled_image (
             0, 0, s_width, s_height, geometry->width, geometry->height);
 
