@@ -1,5 +1,5 @@
 dnl init autoconf / automake
-AC_INIT(wallpaperd, 0.2.1)
+AC_INIT(wallpaperd, 0.2.2)
 AC_CONFIG_SRCDIR(src/main.c)
 AM_INIT_AUTOMAKE
 AM_CONFIG_HEADER(config.h)
