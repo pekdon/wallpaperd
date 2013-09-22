@@ -27,6 +27,8 @@ static char CACHE_SPEC[4096] = { '\0' };
 static enum wallpaper_type CACHE_TYPE = IMAGE;
 static enum wallpaper_mode CACHE_MODE = MODE_UNKNOWN;
 
+static Imlib_Image wallpaper_render (Imlib_Image image,
+                                     enum wallpaper_mode mode);
 static void wallpaper_set_x11 (struct cache_node *node);
 static Pixmap wallpaper_create_x11_pixmap (Imlib_Image image);
 
@@ -53,12 +55,14 @@ wallpaper_set (const char *spec,
                 fprintf (stderr, "failed to set background from %s\n", spec);
                 return;
             }
-            image_rendered = render_image (image, mode);
+            image_rendered = wallpaper_render (image, mode);
 
             imlib_context_set_image (image);
             imlib_free_image ();
         } else {
-            image_rendered = render_color (spec);
+            struct geometry *disp = x11_get_geometry ();
+            image_rendered = render_color (disp, spec);
+            mem_free (disp);
         }
 
         Pixmap pixmap = wallpaper_create_x11_pixmap (image_rendered);
@@ -89,6 +93,37 @@ wallpaper_cache_clear (int do_alloc)
     CACHE_SPEC[0] = '\0';
     CACHE_TYPE = IMAGE;
     CACHE_MODE = MODE_UNKNOWN;
+}
+
+/**
+ * Render image on all available heads.
+ */
+static Imlib_Image
+wallpaper_render (Imlib_Image image, enum wallpaper_mode mode)
+{
+    struct geometry *disp = x11_get_geometry ();
+    struct color black = { 0, 0, 0 };
+    Imlib_Image image_disp = render_new_color (disp->width, disp->height, &black);
+    mem_free (disp);
+
+    struct geometry **heads = x11_get_heads ();
+    for (int i = 0; heads[i]; i++) {
+        Imlib_Image image_head = render_image (heads[i], image, mode);
+
+        imlib_context_set_image (image_disp);
+        imlib_blend_image_onto_image (
+            image_head, 0,
+            0, 0, heads[i]->width, heads[i]->height,
+            heads[i]->x, heads[i]->y, heads[i]->width, heads[i]->height);
+
+        imlib_context_set_image (image_head);
+        imlib_free_image ();
+
+        mem_free (heads[i]);
+    }
+    mem_free (heads);
+
+    return image_disp;
 }
 
 /**

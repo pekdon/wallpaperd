@@ -19,14 +19,13 @@
  * Render image for current screen using a single color.
  */
 Imlib_Image
-render_color (const char *color_str)
+render_color (struct geometry *geometry, const char *color_str)
 {
     struct color color;
     x11_parse_color (color_str, &color);
 
-    struct geometry *disp = x11_get_geometry ();
-    Imlib_Image image = render_new_color (disp->width, disp->height, &color);
-    mem_free (disp);
+    Imlib_Image image =
+        render_new_color (geometry->width, geometry->height, &color);
 
     return image;
 }
@@ -35,50 +34,27 @@ render_color (const char *color_str)
  * Render image for current screen with specified mode.
  */
 Imlib_Image
-render_image (Imlib_Image image, enum wallpaper_mode mode)
+render_image (struct geometry *geometry,
+              Imlib_Image image, enum wallpaper_mode mode)
 {
-    struct geometry *disp = x11_get_geometry ();
-    struct color black = { 0, 0, 0 };
-    Imlib_Image image_disp = render_new_color (disp->width, disp->height, &black);
-    mem_free (disp);
-
-    struct geometry **heads = x11_get_heads ();
-    for (int i = 0; heads[i]; i++) {
-        Imlib_Image image_head;
-
-        switch (mode) {
-        case MODE_TILED:
-            image_head = render_tiled (heads[i], image);
-            break;
-        case MODE_FILL:
-            image_head = render_fill (heads[i], image);
-            break;
-        case MODE_ZOOM:
-            image_head = render_zoom (heads[i], image);
-            break;
-        case MODE_SCALED:
-            image_head = render_scaled (heads[i], image);
-            break;
-        case MODE_CENTERED:
-        default:
-            image_head = render_centered (heads[i], image);
-            break;
-        }
-
-        imlib_context_set_image (image_disp);
-        imlib_blend_image_onto_image (
-            image_head, 0,
-            0, 0, heads[i]->width, heads[i]->height,
-            heads[i]->x, heads[i]->y, heads[i]->width, heads[i]->height);
-
-        imlib_context_set_image (image_head);
-        imlib_free_image ();
-
-        mem_free (heads[i]);
+    switch (mode) {
+    case MODE_TILED:
+        return render_tiled (geometry, image);
+        break;
+    case MODE_FILL:
+        return render_fill (geometry, image);
+        break;
+    case MODE_ZOOM:
+        return render_zoom (geometry, image);
+        break;
+    case MODE_SCALED:
+        return render_scaled (geometry, image);
+        break;
+    case MODE_CENTERED:
+    default:
+        return render_centered (geometry, image);
+        break;
     }
-    mem_free (heads);
-
-    return image_disp;
 }
 
 /**

@@ -18,8 +18,10 @@
 #include "wallpaperd.h"
 #include "x11.h"
 
-extern Imlib_Image render_color (const char *color_str);
-extern Imlib_Image render_image (Imlib_Image image, enum wallpaper_mode mode);
+extern Imlib_Image render_color (struct geometry *geometry,
+                                 const char *color_str);
+extern Imlib_Image render_image (struct geometry *geometry,
+                                 Imlib_Image image, enum wallpaper_mode mode);
 extern Imlib_Image render_centered (struct geometry *geometry, Imlib_Image image);
 extern Imlib_Image render_tiled (struct geometry *geometry, Imlib_Image image);
 extern Imlib_Image render_fill (struct geometry *geometry, Imlib_Image image);
