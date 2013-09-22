@@ -9,6 +9,7 @@ wallpaperd_SOURCES = \
 	compat.c compat.h \
 	cfg.c cfg.h \
 	main.c wallpaperd.h \
+	render.c render.h \
 	wallpaper.c wallpaper.h \
 	util.c util.h \
 	x11.c x11.h
