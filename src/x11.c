@@ -165,6 +165,33 @@ x11_get_geometry (void)
 }
 
 /**
+ * Get number of heads.
+ */
+unsigned int
+x11_get_num_heads (void)
+{
+    unsigned int num = 1;
+
+#ifdef HAVE_XRANDR
+    XRRScreenResources *res = XRRGetScreenResources (DISPLAY,
+                                                     x11_get_root_window ());
+    if (res) {
+        for (int i = 0, num = 0; i < res->noutput; i++) {
+            XRROutputInfo *output =
+                XRRGetOutputInfo(DISPLAY, res, res->outputs[i]);
+            if (output->crtc) {
+                num++;
+            }
+            XRRFreeOutputInfo (output);
+        }
+        XRRFreeScreenResources (res);
+    }
+#endif /* HAVE_XRANDR */ 
+
+    return num;
+}
+
+/**
  * Get null terminated list of heads, all elements AND the list needs
  * to be freed by the caller.
  */
@@ -179,16 +206,7 @@ x11_get_heads (void)
         return x11_get_fake_heads ();
     }
 
-    unsigned int num = 0;
-    for (int i = 0; i < res->noutput; i++) {
-        XRROutputInfo *output = XRRGetOutputInfo(DISPLAY, res, res->outputs[i]);
-        if (output->crtc) {
-            num++;
-            
-        }
-        XRRFreeOutputInfo (output);
-    }
-
+    unsigned int num = x11_get_num_heads ();
     unsigned int head = 0;
     struct geometry **heads = mem_new (sizeof (struct geometry*) * (num + 1));
 

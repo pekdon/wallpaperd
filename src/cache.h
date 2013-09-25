@@ -22,8 +22,6 @@
  */
 struct cache_node {
     char *spec;
-    enum wallpaper_type type;
-    enum wallpaper_mode mode;
     Pixmap pixmap;
 
     struct cache_node *next;
@@ -42,13 +40,9 @@ extern struct cache *cache_new (void);
 extern void cache_free (struct cache *cache);
 
 extern struct cache_node *cache_get_pixmap (struct cache *cache,
-                                            const char *spec,
-                                            enum wallpaper_type type,
-                                            enum wallpaper_mode mode);
+                                            const char *spec);
 extern struct cache_node *cache_set_pixmap (struct cache *cache,
                                             const char *spec,
-                                            enum wallpaper_type type,
-                                            enum wallpaper_mode mode,
                                             Pixmap pixmap);
 
 #endif /* _CACHE_H_ */

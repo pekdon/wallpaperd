@@ -28,20 +28,21 @@ enum bg_select_mode {
  * Supported background types.
  */
 enum wallpaper_type {
-    COLOR,
-    IMAGE
+    WALLPAPER_TYPE_UNKNOWN,
+    WALLPAPER_TYPE_COLOR,
+    WALLPAPER_TYPE_IMAGE
 };
 
 /**
  * Supported background modes.
  */
 enum wallpaper_mode {
+    MODE_UNKNOWN,
     MODE_CENTERED,
     MODE_TILED,
     MODE_FILL,
     MODE_ZOOM,
-    MODE_SCALED,
-    MODE_UNKNOWN
+    MODE_SCALED
 };
 
 /**

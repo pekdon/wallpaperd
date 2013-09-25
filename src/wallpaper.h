@@ -14,9 +14,9 @@
 #endif /* HAVE_CONFIG_H */
 
 #include "wallpaperd.h"
+#include "wallpaper_match.h"
 
-extern void wallpaper_set (const char *spec,
-                           enum wallpaper_type type, enum wallpaper_mode mode);
+extern void wallpaper_set (struct wallpaper_filter *filter);
 extern void wallpaper_cache_clear (int do_alloc);
 
 #endif /* _WALLPAPER_H_ */

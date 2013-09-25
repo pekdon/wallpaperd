@@ -378,13 +378,13 @@ cfg_get_type (struct config *config, long desktop)
 enum wallpaper_type
 cfg_get_type_from_str (const char *str)
 {
-    enum wallpaper_type type = IMAGE;
+    enum wallpaper_type type = WALLPAPER_TYPE_IMAGE;
 
     if (! str) {
     } else if (! strcasecmp (str, "IMAGE")) {
-        type = IMAGE;
+        type = WALLPAPER_TYPE_IMAGE;
     } else if (! strcasecmp (str, "COLOR")) {
-        type = COLOR;
+        type = WALLPAPER_TYPE_COLOR;
     }
 
     return type;

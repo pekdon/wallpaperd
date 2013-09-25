@@ -11,6 +11,7 @@ wallpaperd_SOURCES = \
 	main.c wallpaperd.h \
 	render.c render.h \
 	wallpaper.c wallpaper.h \
+	wallpaper_match.c wallpaper_match.h \
 	util.c util.h \
 	x11.c x11.h
 

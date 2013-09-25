@@ -20,13 +20,10 @@
  * Create new cache node.
  */
 struct cache_node*
-cache_node_new (const char *spec, enum wallpaper_type type,
-                enum wallpaper_mode mode, Pixmap pixmap)
+cache_node_new (const char *spec, Pixmap pixmap)
 {
     struct cache_node *node = mem_new (sizeof (struct cache_node));
     node->spec = str_dup (spec);
-    node->type = type;
-    node->mode = mode;
     node->pixmap = pixmap;
     node->next = 0;
     return node;
@@ -72,12 +69,11 @@ cache_free (struct cache *cache)
  * Get pixmap from cache.
  */
 struct cache_node*
-cache_get_pixmap (struct cache *cache, const char *spec,
-                  enum wallpaper_type type, enum wallpaper_mode mode)
+cache_get_pixmap (struct cache *cache, const char *spec)
 {
     struct cache_node *it = cache->first;
     for (; it != 0; it = it->next) {
-        if (type == it->type && mode == it->mode && ! strcmp (spec, it->spec)) {
+        if (! strcmp (spec, it->spec)) {
             return it;
         }
     }
@@ -88,11 +84,9 @@ cache_get_pixmap (struct cache *cache, const char *spec,
  * Add pixmap to cache.
  */
 struct cache_node*
-cache_set_pixmap (struct cache *cache, const char *spec,
-                  enum wallpaper_type type, enum wallpaper_mode mode,
-                  Pixmap pixmap)
+cache_set_pixmap (struct cache *cache, const char *spec, Pixmap pixmap)
 {
-    struct cache_node *node = cache_node_new (spec, type, mode, pixmap);
+    struct cache_node *node = cache_node_new (spec, pixmap);
     if (cache->last) {
         cache->last->next = node;
         cache->last = node;

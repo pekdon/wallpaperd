@@ -52,6 +52,7 @@ extern Visual *x11_get_visual (void);
 extern Colormap x11_get_colormap (void);
 extern struct geometry *x11_get_geometry (void);
 extern struct geometry **x11_get_heads (void);
+extern unsigned int x11_get_num_heads (void);
 
 extern bool x11_parse_color (const char *color_str, struct color *color_ret);
 

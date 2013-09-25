@@ -10,6 +10,7 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
+#include <stdio.h>
 #include <Imlib2.h>
 
 #include "render.h"
@@ -35,26 +36,38 @@ render_color (struct geometry *geometry, const char *color_str)
  */
 Imlib_Image
 render_image (struct geometry *geometry,
-              Imlib_Image image, enum wallpaper_mode mode)
+              const char *path, enum wallpaper_mode mode)
 {
+    Imlib_Image image = imlib_load_image (path);
+    if (! image) {
+        fprintf (stderr, "failed to load %s\n", path);
+        return NULL;
+    }
+
+    Imlib_Image image_rendered;
     switch (mode) {
     case MODE_TILED:
-        return render_tiled (geometry, image);
+        image_rendered = render_tiled (geometry, image);
         break;
     case MODE_FILL:
-        return render_fill (geometry, image);
+        image_rendered = render_fill (geometry, image);
         break;
     case MODE_ZOOM:
-        return render_zoom (geometry, image);
+        image_rendered = render_zoom (geometry, image);
         break;
     case MODE_SCALED:
-        return render_scaled (geometry, image);
+        image_rendered = render_scaled (geometry, image);
         break;
     case MODE_CENTERED:
     default:
-        return render_centered (geometry, image);
+        image_rendered = render_centered (geometry, image);
         break;
     }
+
+    imlib_context_set_image (image);
+    imlib_free_image ();
+
+    return image_rendered;
 }
 
 /**
