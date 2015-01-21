@@ -62,4 +62,12 @@ struct options {
 extern struct options *OPTIONS;
 extern struct config *CONFIG;
 
+#ifdef HAVE_ARC4RANDOM
+#define rand_init(seed) { }
+#define rand_next arc4random
+#else /* !HAVE_ARC4RANDOM */
+#define rand_init(seed) srandom((seed))
+#define rand_next random
+#endif /* HAVE_ARC4RANDOM */
+
 #endif /* _WALLPAPERD_H_ */

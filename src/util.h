@@ -32,4 +32,8 @@ extern const char *str_first_not_of (const char *str, const char *not_of);
 extern int str_starts_with (const char *str, const char *start);
 extern int str_ends_with (const char *str, const char *end);
 
+#ifndef HAVE_STRLCAT
+extern size_t strlcat(char *dst, const char *src, size_t dstsize);
+#endif /* HAVE_STRLCAT */
+
 #endif /* _UTIL_H_ */

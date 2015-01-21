@@ -247,7 +247,7 @@ find_wallpaper_random (void)
     if (num > 0) {
         int image_select;
         do {
-            image_select = random () % num;
+            image_select = rand_next () % num;
         } while (num > 1 && image_select == image_select_last);
         image_select_last = image_select;
 

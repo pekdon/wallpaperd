@@ -40,6 +40,12 @@ if test "x$HAVE_XRANDR" = "xyes"; then
     AC_DEFINE(HAVE_XRANDR, [1], [Define to 1 if you have an XRANDR capable client])
 fi
 
+dnl check for strlcat
+AC_CHECK_FUNC(strlcat, [AC_DEFINE(HAVE_STRLCAT, [1], [define to 1 if you strlcat in the C library])])
+
+dnl check for arc4random
+AC_CHECK_FUNC(arc4random, [AC_DEFINE(HAVE_ARC4RANDOM, [1], [define to 1 if you arc4random in the C library])])
+
 dnl check for daemon call
 AC_CHECK_FUNC(daemon, [AC_DEFINE(HAVE_DAEMON, [1], [define to 1 if you daemon call in the C library])])
 

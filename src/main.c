@@ -182,7 +182,7 @@ do_start (void)
         die ("failed to load configuration from %s, aborting!", cfg_path);
     }
 
-    srandom(time(NULL));
+    rand_init(time(NULL));
 
     if (OPTIONS->image || OPTIONS->mode != MODE_UNKNOWN) {
         if (OPTIONS->image) {

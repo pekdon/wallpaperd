@@ -95,10 +95,11 @@ wallpaper_render_spec (struct wallpaper_filter *filter)
     for (int i = 0; i < heads; i++) {
         struct wallpaper_spec *spec = wallpaper_match (filter);
         if (spec == NULL) {
-            strcat(buf, "UNDEFINED");
+            strlcat(buf, "UNDEFINED", sizeof(buf));
         } else {
-            sprintf(buf + strlen(buf), "%s-%d-%d",
-                    spec->spec, spec->mode, spec->type);
+            size_t pos = strlen(buf);
+            snprintf(buf + pos, sizeof(buf) - pos, "%s-%d-%d",
+                     spec->spec, spec->mode, spec->type);
             wallpaper_spec_free (spec);
         }
     }
