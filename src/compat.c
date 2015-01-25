@@ -10,7 +10,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+
+#include "compat.h"
 
 #ifndef HAVE_DAEMON
 /**
@@ -50,3 +53,18 @@ daemon (int nochdir, int noclose)
     return 0;
 }
 #endif /* HAVE_DAEMON */
+
+#ifndef HAVE_STRLCAT
+size_t
+strlcat(char *dst, const char *src, size_t dstsize)
+{
+    size_t dst_len = strlen(dst);
+    size_t avail = dstsize - dst_len - 1;
+    size_t cpy_len = MIN(avail, dst_len);
+    if (cpy_len > 0) {
+        memcpy(dst + dst_len, src, cpy_len);
+        dst[dst_len + cpy_len] = '\0';
+    }
+    return dst_len + strlen(src);
+}
+#endif /* HAVE_STRLCAT */

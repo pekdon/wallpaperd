@@ -206,18 +206,3 @@ str_ends_with (const char *str, const char *end)
         return strcmp (str + str_len - end_len, end) == 0;
     }
 }
-
-#ifndef HAVE_STRLCAT
-size_t
-strlcat(char *dst, const char *src, size_t dstsize)
-{
-    size_t dst_len = strlen(dst);
-    size_t avail = dstsize - dst_len - 1;
-    size_t cpy_len = MIN(avail, dst_len);
-    if (cpy_len > 0) {
-        memcpy(dst + dst_len, src, cpy_len);
-        dst[dst_len + cpy_len] = '\0';
-    }
-    return dst_len + strlen(src);
-}
-#endif /* HAVE_STRLCAT */

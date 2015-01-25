@@ -11,8 +11,20 @@
 
 #include "config.h"
 
+#ifndef MIN
+#define MIN(a,b) ((a) > (b)) ? (b) : (a)
+#endif /* MIN */
+
+#ifndef MAX
+#define MAX(a,b) ((a) > (b)) ? (a) : (b)
+#endif /* MAX */
+
 #ifndef HAVE_DAEMON
 extern int daemon (int nochdir, int noclose);
 #endif /* HAVE_DAEMON */
+
+#ifndef HAVE_STRLCAT
+extern size_t strlcat(char *dst, const char *src, size_t dstsize);
+#endif /* HAVE_STRLCAT */
 
 #endif /* _COMPAT_H_ */
