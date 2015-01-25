@@ -1,6 +1,12 @@
-#ifdef HAVE_CONFIG_H
+/*
+ * cfg.c for wallpaperd
+ * Copyright (C) 2010 Claes Nästén <me@pekdon.net>
+ *
+ * This program is licensed under the MIT license.
+ * See the LICENSE file for more information.
+ */
+
 #include "config.h"
-#endif /* HAVE_CONFIG_H */
 
 #define _GNU_SOURCE
 

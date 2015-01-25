@@ -9,9 +9,7 @@
 #ifndef _RENDER_H_
 #define _RENDER_H_
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif /* HAVE_CONFIG_H */
 
 #include <Imlib2.h>
 

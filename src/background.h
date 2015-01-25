@@ -9,9 +9,7 @@
 #ifndef _BACKGROUND_H_
 #define _BACKGROUND_H_
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif /* HAVE_CONFIG_H */
 
 /**
  * Single background, part of a background set.

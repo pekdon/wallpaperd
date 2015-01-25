@@ -1,5 +1,5 @@
 /*
- * wallpaper.h for wallpaperd
+ * wallpaper_match.h for wallpaperd
  * Copyright (C) 2010 Claes Nästén <me@pekdon.net>
  *
  * This program is licensed under the MIT license.
@@ -9,9 +9,7 @@
 #ifndef _WALLPAPER_MATCH_H_
 #define _WALLPAPER_MATCH_H_
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif /* HAVE_CONFIG_H */
 
 #include "wallpaperd.h"
 

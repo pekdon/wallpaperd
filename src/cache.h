@@ -9,9 +9,7 @@
 #ifndef _CACHE_H_
 #define _CACHE_H_
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif /* HAVE_CONFIG_H */
 
 #include <X11/Xlib.h>
 

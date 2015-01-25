@@ -1,0 +1,17 @@
+#ifndef _CONFIG_H_
+#define _CONFIG_H_
+
+#define WALLPAPERD_VERSION_MAJOR @wallpaperd_VERSION_MAJOR@
+#define WALLPAPERD_VERSION_MINOR @wallpaperd_VERSION_MINOR@
+#define WALLPAPERD_VERSION_MICRO @wallpaperd_VERSION_MICRO@
+
+#cmakedefine PC_XRANDR_FOUND
+#cmakedefine HAVE_ARC4RANDOM
+#cmakedefine HAVE_DAEMON
+#cmakedefine HAVE_STRLCAT
+
+#ifdef PC_XRANDR_FOUND
+#define HAVE_XRANDR
+#endif /* PC_XRANDR_FOUND */
+
+#endif /* _CONFIG_H_ */
