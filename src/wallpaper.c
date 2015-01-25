@@ -15,6 +15,7 @@
 #include <X11/Xatom.h>
 
 #include "cache.h"
+#include "compat.h"
 #include "render.h"
 #include "wallpaper.h"
 #include "util.h"
