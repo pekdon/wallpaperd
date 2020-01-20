@@ -168,13 +168,12 @@ x11_get_geometry (void)
 unsigned int
 x11_get_num_heads (void)
 {
-    unsigned int num = 1;
-
 #ifdef HAVE_XRANDR
+    unsigned int num = 0;
     XRRScreenResources *res = XRRGetScreenResources (DISPLAY,
                                                      x11_get_root_window ());
     if (res) {
-        for (int i = 0, num = 0; i < res->noutput; i++) {
+        for (int i = 0; i < res->noutput; i++) {
             XRROutputInfo *output =
                 XRRGetOutputInfo(DISPLAY, res, res->outputs[i]);
             if (output->crtc) {
@@ -184,9 +183,11 @@ x11_get_num_heads (void)
         }
         XRRFreeScreenResources (res);
     }
-#endif /* HAVE_XRANDR */ 
 
     return num;
+#else /* ! HAVE_XRANDR */
+    return 1;
+#endif /* HAVE_XRANDR */
 }
 
 /**
