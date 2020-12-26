@@ -1,6 +1,6 @@
 /*
  * wallpaper.c for wallpaperd
- * Copyright (C) 2010 Claes Nästén <me@pekdon.net>
+ * Copyright (C) 2010-2020 Claes Nästén <pekdon@gmail.com>
  *
  * This program is licensed under the MIT license.
  * See the LICENSE file for more information.
